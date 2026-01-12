@@ -1,11 +1,19 @@
 require('dotenv').config();
 const app = require('./app');
 const connectDB = require('./config/db');
+const { verifyEmailConnection } = require('./services/notification.service');
 
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
 connectDB();
+
+// Verify email configuration on startup
+if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+  verifyEmailConnection();
+} else {
+  console.warn('⚠️  EMAIL_USER or EMAIL_PASSWORD not configured. Email features will not work.');
+}
 
 // Start server
 const server = app.listen(PORT, () => {

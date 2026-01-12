@@ -65,6 +65,18 @@ app.get('/health', (req, res) => {
     success: true,
     message: 'DivyaShree API is running',
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+  });
+});
+
+// Email configuration check endpoint (for debugging)
+app.get('/health/email', async (req, res) => {
+  const { verifyEmailConnection } = require('./services/notification.service');
+  const result = await verifyEmailConnection();
+  res.status(result.success ? 200 : 500).json({
+    ...result,
+    configured: !!(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD),
+    user: process.env.EMAIL_USER ? process.env.EMAIL_USER.replace(/(.{3}).*(@.*)/, '$1***$2') : 'not set',
   });
 });
 

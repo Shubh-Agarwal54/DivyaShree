@@ -5,12 +5,22 @@ const SMS_API_KEY = process.env.SMS_API_KEY || '62e7f2e090fe150ef8deb4466fdc81b3
 const SMS_API_BASE = 'https://sms.renflair.in';
 
 // Email transporter configuration
+// For production (Render), use explicit port 587 with STARTTLS
 const emailTransporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // true for 465, false for other ports
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
   },
+  tls: {
+    rejectUnauthorized: false, // For development/testing - set to true in production if you have valid certs
+  },
+  // Increase timeout for slow connections
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
 });
 
 // Send OTP via SMS
@@ -113,9 +123,11 @@ const sendOTPEmail = async (email, otp, name = 'User') => {
     };
   } catch (error) {
     console.error('Email sending failed:', error.message);
+    console.error('Full error:', error);
     return {
       success: false,
       message: 'Failed to send email OTP',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     };
   }
 };
@@ -186,10 +198,26 @@ const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
     };
   } catch (error) {
     console.error('Email sending failed:', error.message);
+    console.error('Full error:', error);
     return {
       success: false,
       message: 'Failed to send password reset email',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     };
+  }
+};
+
+// Verify email transporter connection (useful for debugging)
+const verifyEmailConnection = async () => {
+  try {
+    await emailTransporter.verify();
+    console.log('✅ Email transporter is ready to send emails');
+    return { success: true, message: 'Email connection verified' };
+  } catch (error) {
+    console.error('❌ Email transporter verification failed:', error.message);
+    console.error('Please check your EMAIL_USER and EMAIL_PASSWORD environment variables');
+    console.error('For Gmail, make sure you are using an App Password, not your regular password');
+    return { success: false, message: error.message };
   }
 };
 
@@ -198,4 +226,5 @@ module.exports = {
   sendOTPEmail,
   sendOrderSMS,
   sendPasswordResetEmail,
+  verifyEmailConnection,
 };
