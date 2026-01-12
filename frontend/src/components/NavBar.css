@@ -1,0 +1,33 @@
+
+/* Small-screen tweaks for navbar logo */
+@media (max-width: 375px) {
+	.logo-container {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+		width: auto;
+		padding: 0 8px;
+		pointer-events: none; /* prevent accidental taps on tiny screens */
+	}
+
+	.nav-logo {
+		font-size: 16px; /* reduce size to fit narrow viewports */
+		line-height: 1;
+		white-space: nowrap; /* keep brand on single line */
+		overflow: hidden;
+		text-overflow: ellipsis;
+		letter-spacing: 0.2px;
+		pointer-events: auto; /* allow clicks on the logo itself */
+	}
+
+	.nav-logo .text-gold {
+		display: inline-block;
+		margin: 0 2px;
+	}
+}
+
+/* Ensure larger screens unaffected */
+@media (min-width: 376px) {
+	.logo-container { pointer-events: auto; }
+}
+
