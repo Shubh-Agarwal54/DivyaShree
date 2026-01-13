@@ -91,11 +91,12 @@ const fallbackProducts = [
 const ProductGrid = ({ title, subtitle, limit = 8 }) => {
   const [products, setProducts] = useState(fallbackProducts);
   const [loading, setLoading] = useState(true);
+  const [displayCount, setDisplayCount] = useState(limit);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const result = await productAPI.getAllProducts({ limit: 20 });
+        const result = await productAPI.getAllProducts({ limit: 50 });
         if (result.success && result.data && result.data.products && result.data.products.length > 0) {
           setProducts(result.data.products);
         }
@@ -110,7 +111,11 @@ const ProductGrid = ({ title, subtitle, limit = 8 }) => {
     fetchProducts();
   }, []);
 
-  const displayProducts = products.slice(0, limit);
+  const displayProducts = products.slice(0, displayCount);
+  
+  const handleViewAll = () => {
+    setDisplayCount(prevCount => prevCount + 8);
+  };
   
   const handleAddToWishlist = async (e, productId) => {
     e.preventDefault();
@@ -218,11 +223,13 @@ const ProductGrid = ({ title, subtitle, limit = 8 }) => {
         </div>
         
         {/* View All button */}
-        <div className="text-center mt-10">
-          <button className="btn-outline">
-            VIEW ALL
-          </button>
-        </div>
+        {displayCount < products.length && (
+          <div className="text-center mt-10">
+            <button onClick={handleViewAll} className="btn-outline">
+              VIEW ALL
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -1,4 +1,5 @@
 import modernShehzadi from '@/assets/modern-shehzadi.jpg';
+import { Link } from 'react-router-dom';
 
 const ModernShehzadi = () => {
   return (
@@ -23,9 +24,9 @@ const ModernShehzadi = () => {
             <p className="font-body text-sm md:text-base text-muted-foreground tracking-wider uppercase mb-8 max-w-sm">
               Bridal Lehengas for the Modern Bride
             </p>
-            <a href='/shop/lehengas' ><button className="btn-outline">
+            <Link to="/shop/lehengas" className="btn-outline">
               SHOP NOW
-            </button> </a>
+            </Link>
           </div>
         </div>
       </div>

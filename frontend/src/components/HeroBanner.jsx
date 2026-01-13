@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import heroBanner from '@/assets/hero-banner.jpg';
 
@@ -61,9 +62,9 @@ const HeroBanner = () => {
               <p className="font-body text-lg md:text-xl tracking-widest uppercase">Lehengas</p>
             </div>
             
-           <a href='/shop/lehengas' > <button  className="mt-6 bg-background text-foreground px-8 py-3 font-body text-sm tracking-widest uppercase hover:bg-gold hover:text-foreground transition-all duration-300 border border-background hover:border-gold">
+            <Link to="/shop/lehengas" className="mt-6 bg-background text-foreground px-8 py-3 font-body text-sm tracking-widest uppercase hover:bg-gold hover:text-foreground transition-all duration-300 border border-background hover:border-gold inline-block text-center">
               SHOP NOW
-            </button></a>
+            </Link>
           </div>
         </div>
       </div>

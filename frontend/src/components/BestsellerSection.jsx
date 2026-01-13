@@ -1,4 +1,5 @@
 import { useFadeUpScroll } from '@/hooks/useScrollAnimations';
+import { Link } from 'react-router-dom';
 import bestsellerBanner from '@/assets/bestseller-banner.jpg';
 
 const BestsellerSection = () => {
@@ -19,12 +20,12 @@ const BestsellerSection = () => {
             <h2 className="font-display text-4xl md:text-6xl text-foreground tracking-widest uppercase mb-6">
               Brigade
             </h2>
-            <a 
-              href="#" 
+            <Link 
+              to="/bestsellers" 
               className="inline-flex items-center gap-2 font-body text-sm tracking-widest text-foreground border-b-2 border-foreground pb-1 hover:text-primary hover:border-primary transition-colors"
             >
               SHOP NOW <span className="text-lg">›</span>
-            </a>
+            </Link>
           </div>
         </div>
       </div>
