@@ -8,6 +8,7 @@ const UserDetail = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [stats, setStats] = useState({ totalOrders: 0, totalSpent: 0 });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
 
@@ -22,13 +23,24 @@ const UserDetail = () => {
         api.get(`/admin/users/${id}`),
         api.get(`/admin/users/${id}/orders`)
       ]);
-      setUser(userResponse.data.data);
+      console.log('User Response:', userResponse.data);
+      console.log('Orders Response:', ordersResponse.data);
+      
+      // Extract user and stats from response
+      if (userResponse.data.success && userResponse.data.data) {
+        setUser(userResponse.data.data.user);
+        setStats(userResponse.data.data.stats || { totalOrders: 0, totalSpent: 0 });
+      }
+      
       // Backend returns { data: { orders: [], pagination: {} } }
       const ordersData = ordersResponse.data.data?.orders || ordersResponse.data.data;
       setOrders(Array.isArray(ordersData) ? ordersData : []);
     } catch (err) {
       console.error('Failed to fetch user details:', err);
+      console.error('Error response:', err.response?.data);
+      setUser(null);
       setOrders([]);
+      setStats({ totalOrders: 0, totalSpent: 0 });
     } finally {
       setLoading(false);
     }
@@ -87,13 +99,13 @@ const UserDetail = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {!user.isVerified && (
+          {!user.isEmailVerified && (
             <button
               onClick={handleVerifyUser}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
             >
               <CheckCircle size={18} />
-              Verify User
+              Verify Email
             </button>
           )}
           <button
@@ -147,12 +159,12 @@ const UserDetail = () => {
                     <p className="font-body text-sm text-gray-900">{user.email}</p>
                   </div>
                 </div>
-                {user.phoneNumber && (
+                {user.phone && (
                   <div className="flex items-center gap-3">
                     <Phone size={20} className="text-gray-400" />
                     <div>
                       <p className="font-body text-xs text-gray-600">Phone</p>
-                      <p className="font-body text-sm text-gray-900">{user.phoneNumber}</p>
+                      <p className="font-body text-sm text-gray-900">{user.phone}</p>
                     </div>
                   </div>
                 )}
@@ -183,15 +195,17 @@ const UserDetail = () => {
                     {user.isBlocked ? 'Blocked' : 'Active'}
                   </span>
                   <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                    user.isVerified ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                    user.isEmailVerified ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
                   }`}>
-                    {user.isVerified ? 'Verified' : 'Not Verified'}
+                    Email {user.isEmailVerified ? 'Verified' : 'Unverified'}
                   </span>
-                  <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                    user.emailVerified ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    Email {user.emailVerified ? 'Verified' : 'Unverified'}
-                  </span>
+                  {user.phone && (
+                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                      user.isPhoneVerified ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      Phone {user.isPhoneVerified ? 'Verified' : 'Unverified'}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -202,12 +216,12 @@ const UserDetail = () => {
               <div className="space-y-4">
                 <div>
                   <p className="font-body text-xs text-gray-600">Total Orders</p>
-                  <p className="font-body text-2xl font-bold text-gray-900">{Array.isArray(orders) ? orders.length : 0}</p>
+                  <p className="font-body text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
                 </div>
                 <div>
                   <p className="font-body text-xs text-gray-600">Total Spent</p>
                   <p className="font-body text-2xl font-bold text-gray-900">
-                    ₹{Array.isArray(orders) ? orders.reduce((sum, order) => sum + (order.total || 0), 0).toLocaleString('en-IN') : 0}
+                    ₹{stats.totalSpent.toLocaleString('en-IN')}
                   </p>
                 </div>
               </div>

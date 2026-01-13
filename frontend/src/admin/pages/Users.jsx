@@ -37,12 +37,13 @@ const Users = () => {
       };
 
       const response = await api.get('/admin/users', { params });
+      console.log('API Response:', response.data);
       setUsers(response.data.data.users);
       setPagination({
-        page: response.data.data.pagination.currentPage,
+        page: response.data.data.pagination.page,
         limit: response.data.data.pagination.limit,
-        totalPages: response.data.data.pagination.totalPages,
-        totalUsers: response.data.data.pagination.totalUsers
+        totalPages: response.data.data.pagination.pages,
+        totalUsers: response.data.data.pagination.total
       });
     } catch (err) {
       console.error('Failed to fetch users:', err);
@@ -175,7 +176,7 @@ const Users = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-body text-sm text-gray-900">{user.phoneNumber || 'N/A'}</p>
+                        <p className="font-body text-sm text-gray-900">{user.phone || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
@@ -191,7 +192,7 @@ const Users = () => {
                           }`}>
                             {user.isBlocked ? 'Blocked' : 'Active'}
                           </span>
-                          {user.isVerified && (
+                          {user.isEmailVerified && (
                             <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                               Verified
                             </span>
@@ -219,11 +220,11 @@ const Users = () => {
                           >
                             <Ban size={18} />
                           </button>
-                          {!user.isVerified && (
+                          {!user.isEmailVerified && (
                             <button
                               onClick={() => handleVerifyUser(user._id)}
                               className="p-1 text-green-600 hover:bg-green-50 rounded"
-                              title="Verify User"
+                              title="Verify Email"
                             >
                               <CheckCircle size={18} />
                             </button>
