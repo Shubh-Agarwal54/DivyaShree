@@ -5,7 +5,7 @@ export const products = [
     name: 'Maroon Banarasi Silk Saree',
     price: 4999,
     originalPrice: 8999,
-    category: 'Sarees',
+    category: 'sarees',
     fabric: 'Banarasi Silk',
     color: 'Maroon',
     rating: 4.8,
@@ -30,7 +30,7 @@ export const products = [
       'Dry clean only',
       'Comes with unstitched blouse piece',
     ],
-    occasion: ['Wedding', 'Festival', 'Party'],
+    occasions: ['wedding', 'festival', 'party'],
     care: 'Dry clean only. Store in a cool, dry place.',
   },
   {
@@ -38,7 +38,7 @@ export const products = [
     name: 'Royal Blue Designer Lehenga',
     price: 12999,
     originalPrice: 19999,
-    category: 'Lehengas',
+    category: 'lehengas',
     fabric: 'Velvet',
     color: 'Royal Blue',
     rating: 4.9,
@@ -63,7 +63,7 @@ export const products = [
       'Includes blouse and dupatta',
       'Designer collection',
     ],
-    occasion: ['Wedding', 'Sangeet', 'Reception'],
+    occasions: ['wedding', 'sangeet', 'reception'],
     care: 'Dry clean recommended. Handle with care.',
   },
   {
@@ -71,7 +71,7 @@ export const products = [
     name: 'Emerald Green Anarkali Suit',
     price: 5999,
     originalPrice: 9999,
-    category: 'Suits & Sets',
+    category: 'suits',
     fabric: 'Georgette',
     color: 'Emerald Green',
     rating: 4.7,
@@ -96,7 +96,7 @@ export const products = [
       'Semi-stitched for perfect fit',
       'Available in multiple sizes',
     ],
-    occasion: ['Party', 'Festival', 'Reception'],
+    occasions: ['party', 'festival', 'reception'],
     care: 'Gentle hand wash or dry clean.',
   },
   {
@@ -104,7 +104,7 @@ export const products = [
     name: 'Pink Floral Print Kurti',
     price: 1999,
     originalPrice: 3499,
-    category: 'Kurtis',
+    category: 'kurtis',
     fabric: 'Cotton',
     color: 'Pink',
     rating: 4.5,
@@ -129,7 +129,7 @@ export const products = [
       'Three-quarter sleeves',
       'Machine washable',
     ],
-    occasion: ['Casual', 'Office', 'Daily Wear'],
+    occasions: ['casual', 'office', 'daily wear'],
     care: 'Machine wash cold. Do not bleach.',
   },
   {
@@ -137,7 +137,7 @@ export const products = [
     name: 'Gold Sequin Evening Gown',
     price: 8999,
     originalPrice: 14999,
-    category: 'Gowns',
+    category: 'gowns',
     fabric: 'Net',
     color: 'Gold',
     rating: 4.8,
@@ -162,7 +162,7 @@ export const products = [
       'Includes inner lining',
       'Indo-western style',
     ],
-    occasion: ['Cocktail', 'Reception', 'Party'],
+    occasions: ['cocktail', 'reception', 'party'],
     care: 'Dry clean only. Store flat.',
   },
   {
@@ -170,7 +170,7 @@ export const products = [
     name: 'Traditional Red Bridal Lehenga',
     price: 24999,
     originalPrice: 39999,
-    category: 'Lehengas',
+    category: 'lehengas',
     fabric: 'Silk',
     color: 'Red',
     rating: 5.0,
@@ -195,14 +195,14 @@ export const products = [
       'Semi-stitched (can be customized)',
       'Premium quality craftsmanship',
     ],
-    occasion: ['Wedding', 'Bridal'],
+    occasions: ['wedding', 'bridal'],
     care: 'Professional dry clean only.',
   },
 ];
 
 // Helper functions
 export const getProductById = (id) => {
-  return products.find(product => product.id === parseInt(id));
+  return products.find(product => product.id === parseInt(id) || product._id === id);
 };
 
 export const getProductsByCategory = (category) => {
@@ -210,7 +210,7 @@ export const getProductsByCategory = (category) => {
 };
 
 export const getProductsByFabric = (fabric) => {
-  return products.filter(product => product.fabric.includes(fabric));
+  return products.filter(product => product.fabric && product.fabric.includes(fabric));
 };
 
 export const getRelatedProducts = (productId, limit = 4) => {
@@ -218,11 +218,10 @@ export const getRelatedProducts = (productId, limit = 4) => {
   if (!product) return [];
   
   return products
-    .filter(p => p.id !== productId && p.category === product.category)
+    .filter(p => (p.id !== productId && p._id !== productId) && p.category === product.category)
     .slice(0, limit);
 };
 
-// New helper functions for sale, bestseller, and new arrivals
 export const getSaleProducts = () => {
   return products.filter(product => product.onSale);
 };
@@ -230,7 +229,7 @@ export const getSaleProducts = () => {
 export const getBestsellerProducts = () => {
   return products
     .filter(product => product.isBestseller)
-    .sort((a, b) => b.soldCount - a.soldCount);
+    .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0));
 };
 
 export const getNewArrivals = (daysRange = 30) => {
@@ -238,27 +237,12 @@ export const getNewArrivals = (daysRange = 30) => {
   cutoffDate.setDate(cutoffDate.getDate() - daysRange);
   
   return products
-    .filter(product => new Date(product.dateAdded) >= cutoffDate)
-    .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+    .filter(product => product.isNewArrival || (product.dateAdded && new Date(product.dateAdded) >= cutoffDate))
+    .sort((a, b) => new Date(b.createdAt || b.dateAdded) - new Date(a.createdAt || a.dateAdded));
 };
 
 export const getProductsByOccasion = (occasion) => {
   return products.filter(product => 
-    product.occasion && product.occasion.includes(occasion)
+    product.occasions && product.occasions.includes(occasion)
   );
 };
-
-// export const getProductsByFabric = (fabric) => {
-//   return products.filter(product => 
-//     product.fabric.toLowerCase().includes(fabric.toLowerCase())
-//   );
-// };
-
-// export const getRelatedProducts = (productId, limit = 4) => {
-//   const product = getProductById(productId);
-//   if (!product) return [];
-  
-//   return products
-//     .filter(p => p.id !== productId && p.category === product.category)
-//     .slice(0, limit);
-// };

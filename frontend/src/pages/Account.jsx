@@ -214,76 +214,82 @@ const Account = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="py-8 md:py-12">
-        <div className="container mx-auto px-4">
+      <main className="py-4 sm:py-8 md:py-12">
+        <div className="container mx-auto px-3 sm:px-4">
           {/* Page Header */}
-          <div className="mb-8">
-            <h1 className="font-display text-3xl md:text-5xl text-foreground mb-2">My Account</h1>
-            <p className="font-body text-muted-foreground">Welcome back, {userData.firstName}!</p>
+          <div className="mb-4 sm:mb-8">
+            <h1 className="font-display text-2xl sm:text-3xl md:text-5xl text-foreground mb-2">My Account</h1>
+            <p className="font-body text-sm sm:text-base text-muted-foreground">Welcome back, {userData.firstName}!</p>
           </div>
 
-          <div className="grid lg:grid-cols-4 gap-8 acc-mar ">
+          <div className="grid lg:grid-cols-4 gap-4 sm:gap-8 acc-mar">
             {/* Sidebar */}
             <div className="lg:col-span-1">
-              <div className="bg-card p-6 rounded-lg shadow-card border border-border sticky top-24">
-                <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                    <User size={32} className="text-primary" />
+              <div className="bg-card p-4 sm:p-6 rounded-lg shadow-card border border-border sticky top-24">
+                <div className="flex items-center gap-3 sm:gap-4 mb-6 pb-6 border-b border-border">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <User size={24} className="text-primary sm:hidden" />
+                    <User size={32} className="text-primary hidden sm:block" />
                   </div>
-                  <div>
-                    <h3 className="font-body font-semibold text-foreground">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-body font-semibold text-foreground text-sm sm:text-base truncate">
                       {userData.firstName} {userData.lastName}
                     </h3>
-                    <p className="font-body text-sm text-muted-foreground">{userData.email}</p>
+                    <p className="font-body text-xs sm:text-sm text-muted-foreground truncate break-all">{userData.email}</p>
                   </div>
                 </div>
 
-                <nav className="space-y-2">
+                <nav className="space-y-1 sm:space-y-2">
                   <button
                     onClick={() => setActiveTab('profile')}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm font-body text-sm transition-all ${
+                    className={`w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-sm font-body text-xs sm:text-sm transition-all ${
                       activeTab === 'profile'
                         ? 'bg-primary text-primary-foreground'
                         : 'text-foreground hover:bg-muted'
                     }`}
                   >
-                    <User size={18} />
+                    <User size={16} className="sm:hidden" />
+                    <User size={18} className="hidden sm:block" />
                     Profile
                   </button>
                   <button
                     onClick={() => setActiveTab('orders')}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm font-body text-sm transition-all ${
+                    className={`w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-sm font-body text-xs sm:text-sm transition-all ${
                       activeTab === 'orders'
                         ? 'bg-primary text-primary-foreground'
                         : 'text-foreground hover:bg-muted'
                     }`}
                   >
-                    <Package size={18} />
+                    <Package size={16} className="sm:hidden" />
+                    <Package size={18} className="hidden sm:block" />
                     Orders
                   </button>
                   <button
                     onClick={() => setActiveTab('addresses')}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm font-body text-sm transition-all ${
+                    className={`w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-sm font-body text-xs sm:text-sm transition-all ${
                       activeTab === 'addresses'
                         ? 'bg-primary text-primary-foreground'
                         : 'text-foreground hover:bg-muted'
                     }`}
                   >
-                    <MapPin size={18} />
+                    <MapPin size={16} className="sm:hidden" />
+                    <MapPin size={18} className="hidden sm:block" />
                     Addresses
                   </button>
                   <Link
                     to="/wishlist"
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-sm font-body text-sm text-foreground hover:bg-muted transition-all"
+                    className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-sm font-body text-xs sm:text-sm text-foreground hover:bg-muted transition-all"
                   >
-                    <Heart size={18} />
+                    <Heart size={16} className="sm:hidden" />
+                    <Heart size={18} className="hidden sm:block" />
                     Wishlist
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-sm font-body text-sm text-destructive hover:bg-destructive/10 transition-all"
+                    className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-sm font-body text-xs sm:text-sm text-destructive hover:bg-destructive/10 transition-all"
                   >
-                    <LogOut size={18} />
+                    <LogOut size={16} className="sm:hidden" />
+                    <LogOut size={18} className="hidden sm:block" />
                     Logout
                   </button>
                 </nav>
@@ -294,8 +300,8 @@ const Account = () => {
             <div className="lg:col-span-3">
               {/* Profile Tab */}
               {activeTab === 'profile' && (
-                <div className="bg-card p-6 md:p-8 rounded-lg shadow-card border border-border">
-                  <div className="flex items-center justify-between mb-6">
+                <div className="bg-card p-4 sm:p-6 md:p-8 rounded-lg shadow-card border border-border">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
                     <h2 className="font-display text-2xl text-foreground">Profile Information</h2>
                     <button 
                       onClick={openProfileEditModal}

@@ -4,17 +4,40 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductGrid from '@/components/ProductGrid';
 import { getBestsellerProducts } from '@/data/products';
+import { productAPI } from '@/services/product.api';
 import { ChevronRight, TrendingUp, Award, Star } from 'lucide-react';
 import { useFadeUpScroll, useStaggerScroll } from '@/hooks/useScrollAnimations';
 
 export default function Bestsellers() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const titleRef = useFadeUpScroll({ duration: 0.8 });
   const gridRef = useStaggerScroll({ stagger: 0.1, yOffset: 40 });
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    setProducts(getBestsellerProducts());
+    
+    // Fetch bestseller products from API
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const result = await productAPI.getAllProducts({ isBestseller: true, limit: 50 });
+        if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+          setProducts(result.data.products);
+        } else {
+          // Fallback to hardcoded products
+          setProducts(getBestsellerProducts());
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        // Fallback to hardcoded products
+        setProducts(getBestsellerProducts());
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProducts();
   }, []);
 
   const totalSold = products.reduce((sum, product) => sum + product.soldCount, 0);

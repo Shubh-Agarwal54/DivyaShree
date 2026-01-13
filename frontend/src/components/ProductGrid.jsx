@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Star } from 'lucide-react';
 import { wishlistAPI } from '@/services/api';
+import { productAPI } from '@/services/product.api';
 import { toast } from 'sonner';
 import product1 from '@/assets/product-1.jpg';
 import product2 from '@/assets/product-2.jpg';
@@ -11,7 +13,7 @@ import product6 from '@/assets/product-6.jpg';
 import product7 from '@/assets/product-7.jpg';
 import product8 from '@/assets/product-8.jpg';
 
-const products = [
+const fallbackProducts = [
   {
     id: 1,
     name: 'Pink Silk Saree with Gold Embroidery',
@@ -87,6 +89,27 @@ const products = [
 ];
 
 const ProductGrid = ({ title, subtitle, limit = 8 }) => {
+  const [products, setProducts] = useState(fallbackProducts);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const result = await productAPI.getAllProducts({ limit: 20 });
+        if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+          setProducts(result.data.products);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        // Keep fallback products
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   const displayProducts = products.slice(0, limit);
   
   const handleAddToWishlist = async (e, productId) => {
@@ -125,62 +148,73 @@ const ProductGrid = ({ title, subtitle, limit = 8 }) => {
         {title && <h2 className="section-title mb-8">{title}</h2>}
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {displayProducts.map((product, index) => (
-            <Link
-              key={product.id}
-              to={`/product/${product.id}`}
-              className="group product-card animate-fade-up"
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              {/* Image container */}
-              <div className="relative overflow-hidden aspect-[3/4]">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-500"
-                />
-                
-                {/* Wishlist button */}
-                <button 
-                  onClick={(e) => handleAddToWishlist(e, product.id)}
-                  className="absolute top-3 right-3 w-8 h-8 bg-background/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary hover:text-primary-foreground"
-                >
-                  <Heart size={16} />
-                </button>
-                
-                {/* Discount badge */}
-                <div className="absolute top-3 left-3 bg-primary text-primary-foreground px-2 py-1 text-xs font-body">
-                  {calculateDiscount(product.originalPrice, product.price)}% OFF
-                </div>
-              </div>
-              
-              {/* Product info */}
-              <div className="p-3 md:p-4">
-                {/* Rating */}
-                <div className="flex items-center gap-1 mb-2">
-                  <Star size={12} className="fill-gold text-gold" />
-                  <span className="text-xs font-body text-muted-foreground">
-                    {product.rating} ({product.reviews})
-                  </span>
+          {displayProducts.map((product, index) => {
+            // Handle both API products (_id, images[]) and fallback products (id, image)
+            const productId = product._id || product.id;
+            const productImage = product.images?.[0] || product.image;
+            const discount = product.salePercentage || calculateDiscount(product.originalPrice, product.price);
+            
+            return (
+              <Link
+                key={productId}
+                to={`/product/${productId}`}
+                className="group product-card animate-fade-up"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
+                {/* Image container */}
+                <div className="relative overflow-hidden aspect-[3/4]">
+                  <img
+                    src={productImage}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-500"
+                  />
+                  
+                  {/* Wishlist button */}
+                  <button 
+                    onClick={(e) => handleAddToWishlist(e, productId)}
+                    className="absolute top-3 right-3 w-8 h-8 bg-background/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <Heart size={16} />
+                  </button>
+                  
+                  {/* Discount badge */}
+                  {discount > 0 && (
+                    <div className="absolute top-3 left-3 bg-primary text-primary-foreground px-2 py-1 text-xs font-body">
+                      {discount}% OFF
+                    </div>
+                  )}
                 </div>
                 
-                {/* Name */}
-                <h3 className="font-body text-xs md:text-sm text-foreground line-clamp-2 mb-2 min-h-[2.5rem]">
-                  {product.name}
-                </h3>
-                
-                {/* Price */}
-                <div className="flex items-center gap-2">
-                  <span className="font-body font-semibold text-sm md:text-base text-foreground">
-                    {formatPrice(product.price)}
-                  </span>
-                  <span className="font-body text-xs text-muted-foreground line-through">
-                    {formatPrice(product.originalPrice)}
-                  </span>
+                {/* Product info */}
+                <div className="p-3 md:p-4">
+                  {/* Rating */}
+                  <div className="flex items-center gap-1 mb-2">
+                    <Star size={12} className="fill-gold text-gold" />
+                    <span className="text-xs font-body text-muted-foreground">
+                      {product.rating || 4.5} ({product.reviews || 0})
+                    </span>
+                  </div>
+                  
+                  {/* Name */}
+                  <h3 className="font-body text-xs md:text-sm text-foreground line-clamp-2 mb-2 min-h-[2.5rem]">
+                    {product.name}
+                  </h3>
+                  
+                  {/* Price */}
+                  <div className="flex items-center gap-2">
+                    <span className="font-body font-semibold text-sm md:text-base text-foreground">
+                      {formatPrice(product.price)}
+                    </span>
+                    {product.originalPrice && (
+                      <span className="font-body text-xs text-muted-foreground line-through">
+                        {formatPrice(product.originalPrice)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
         
         {/* View All button */}

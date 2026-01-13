@@ -30,6 +30,17 @@ import SneakPeek from "./pages/SneakPeek";
 import OshiCrushers from "./pages/OshiCrushers";
 import CultFaves from "./pages/CultFaves";
 import CuratedForYou from "./pages/CuratedForYou";
+// Admin Pages
+import AdminLayout from "./admin/AdminLayout";
+import Dashboard from "./admin/pages/Dashboard";
+import Users from "./admin/pages/Users";
+import UserDetail from "./admin/pages/UserDetail";
+import Orders from "./admin/pages/Orders";
+import OrderDetail from "./admin/pages/OrderDetail";
+import Products from "./admin/pages/Products";
+import ProductForm from "./admin/pages/ProductForm";
+import Analytics from "./admin/pages/Analytics";
+import Settings from "./admin/pages/Settings";
 // Shop Pages
 import Sarees from "./pages/shop/Sarees";
 import Lehengas from "./pages/shop/Lehengas";
@@ -148,6 +159,21 @@ const App = () => (
             
             {/* Checkout Route */}
             <Route path="/checkout" element={<Checkout />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="users" element={<Users />} />
+              <Route path="users/:id" element={<UserDetail />} />
+              <Route path="orders" element={<Orders />} />
+              <Route path="orders/:id" element={<OrderDetail />} />
+              <Route path="products" element={<Products />} />
+              <Route path="products/new" element={<ProductForm />} />
+              <Route path="products/:id/edit" element={<ProductForm />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
             
             {/* Catch-all 404 */}
             <Route path="*" element={<NotFound />} />

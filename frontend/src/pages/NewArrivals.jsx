@@ -4,18 +4,40 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductGrid from '@/components/ProductGrid';
 import { getNewArrivals } from '@/data/products';
+import { productAPI } from '@/services/product.api';
 import { ChevronRight, Sparkles, Clock, Gift } from 'lucide-react';
 import { useFadeUpScroll, useStaggerScroll } from '@/hooks/useScrollAnimations';
 
 export default function NewArrivals() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const titleRef = useFadeUpScroll({ duration: 0.8 });
   const gridRef = useStaggerScroll({ stagger: 0.1, yOffset: 40 });
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    // Get products added in last 60 days
-    setProducts(getNewArrivals(60));
+    
+    // Fetch new arrival products from API
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const result = await productAPI.getAllProducts({ isNewArrival: true, limit: 50 });
+        if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+          setProducts(result.data.products);
+        } else {
+          // Fallback to hardcoded products (last 60 days)
+          setProducts(getNewArrivals(60));
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        // Fallback to hardcoded products
+        setProducts(getNewArrivals(60));
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProducts();
   }, []);
 
   return (

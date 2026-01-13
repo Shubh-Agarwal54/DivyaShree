@@ -8,6 +8,8 @@ const passport = require('./config/passport');
 // Routes
 const userRoutes = require('./modules/user/user.routes');
 const orderRoutes = require('./modules/order/order.routes');
+const adminRoutes = require('./modules/admin/admin.routes');
+const productRoutes = require('./modules/product/product.routes');
 
 const app = express();
 
@@ -83,6 +85,8 @@ app.get('/health/email', async (req, res) => {
 // API Routes
 app.use('/api/user', userRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/products', productRoutes); // Public product routes
+app.use('/api/admin', adminRoutes); // Admin routes
 
 // 404 Handler
 app.use('*', (req, res) => {

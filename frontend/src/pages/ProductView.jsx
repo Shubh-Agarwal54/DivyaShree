@@ -4,7 +4,8 @@ import { Heart, Share2, Star, Truck, RefreshCw, Shield, ChevronRight, Minus, Plu
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
-import { products } from '@/data/products';
+import { productAPI } from '@/services/product.api';
+import { getProductById } from '@/data/products';
 import { toast } from '@/hooks/use-toast';
 import product1 from '@/assets/product-1.jpg';
 import product2 from '@/assets/product-2.jpg';
@@ -14,11 +15,10 @@ import product4 from '@/assets/product-4.jpg';
 // Fallback images for products without images
 const fallbackImages = [product1, product2, product3, product4];
 
-const relatedProducts = [
-  { id: 2, name: 'Maroon Silk Saree', price: 15999, originalPrice: 22999, image: product2, rating: 4.8 },
-  { id: 3, name: 'Teal Georgette Saree', price: 9999, originalPrice: 14999, image: product3, rating: 4.3 },
-  { id: 4, name: 'Yellow Organza Lehenga', price: 24999, originalPrice: 35999, image: product4, rating: 4.9 },
-];
+// Check if ID is a valid MongoDB ObjectID (24 hex characters)
+const isValidMongoId = (id) => {
+  return /^[0-9a-fA-F]{24}$/.test(id);
+};
 
 const ProductView = () => {
   const { id } = useParams();
@@ -29,25 +29,101 @@ const ProductView = () => {
   const [selectedSize, setSelectedSize] = useState('Free Size');
   const [selectedColor, setSelectedColor] = useState('');
   const [activeTab, setActiveTab] = useState('description');
+  const [productData, setProductData] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   
-  // Find the actual product from products.js based on URL param
-  const productData = products.find(p => p.id === parseInt(id)) || products[0];
-  
-  // Initialize color selection
+  // Fetch product data from API or fallback
   useEffect(() => {
-    if (productData && productData.color && !selectedColor) {
-      setSelectedColor(productData.color);
-    }
-  }, [productData, selectedColor]);
+    const fetchProduct = async () => {
+      setLoading(true);
+      try {
+        // If ID is a valid MongoDB ID, fetch from API
+        if (isValidMongoId(id)) {
+          const result = await productAPI.getProduct(id);
+          console.log('Product API result:', result);
+          if (result.success && result.data) {
+            setProductData(result.data);
+            if (result.data.color && !selectedColor) {
+              setSelectedColor(result.data.color);
+            }
+            
+            // Fetch related products
+            const relatedResult = await productAPI.getRelatedProducts(id);
+            if (relatedResult.success && relatedResult.data) {
+              setRelatedProducts(relatedResult.data || []);
+            }
+          } else {
+            console.error('Product not found or API failed:', result);
+            setProductData(null);
+          }
+        } else {
+          // Fallback to hardcoded products for numeric IDs
+          const fallbackProduct = getProductById(id);
+          if (fallbackProduct) {
+            setProductData(fallbackProduct);
+            if (fallbackProduct.color && !selectedColor) {
+              setSelectedColor(fallbackProduct.color);
+            }
+          } else {
+            setProductData(null);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        // Try fallback data
+        const fallbackProduct = getProductById(id);
+        if (fallbackProduct) {
+          setProductData(fallbackProduct);
+        } else {
+          setProductData(null);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Scroll to top when component mounts or product ID changes
-  useEffect(() => {
+    if (id) {
+      fetchProduct();
+    }
     window.scrollTo(0, 0);
   }, [id]);
 
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B1E1E]"></div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  if (!productData) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="font-display text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
+            <button
+              onClick={() => navigate('/')}
+              className="px-6 py-3 bg-[#6B1E1E] text-white rounded-lg hover:bg-[#8B2E2E]"
+            >
+              Go Back Home
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
   const discount = productData.originalPrice 
     ? Math.round(((productData.originalPrice - productData.price) / productData.originalPrice) * 100)
-    : 0;
+    : productData.salePercentage || 0;
   
   // Use product images or fallback
   const productImages = productData.images && productData.images.length > 0 
@@ -65,7 +141,7 @@ const ProductView = () => {
   const handleAddToCart = () => {
     // Create cart item with selected options
     const cartItem = {
-      id: productData.id,
+      id: productData._id || productData.id,
       name: productData.name,
       price: productData.price,
       quantity: quantity,
@@ -173,7 +249,7 @@ const ProductView = () => {
                     {productData.rating || 0} ({productData.reviews || 0} reviews)
                   </span>
                 </div>
-                <p className="font-body text-sm text-muted-foreground">SKU: DS-{productData.id.toString().padStart(3, '0')}</p>
+                <p className="font-body text-sm text-muted-foreground">SKU: DS-{(productData._id || productData.id)?.toString().slice(-6).toUpperCase()}</p>
               </div>
 
               {/* Price */}
@@ -364,13 +440,13 @@ const ProductView = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {relatedProducts.map((product) => (
                 <Link
-                  key={product.id}
-                  to={`/product/${product.id}`}
+                  key={product._id || product.id}
+                  to={`/product/${product._id || product.id}`}
                   className="group bg-card rounded-lg overflow-hidden shadow-card hover:shadow-hover transition-all duration-500 hover:-translate-y-1"
                 >
                   <div className="relative aspect-[3/4] overflow-hidden">
                     <img
-                      src={product.image}
+                      src={product.images?.[0] || product.image || fallbackImages[0]}
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
@@ -379,9 +455,11 @@ const ProductView = () => {
                     <h3 className="font-body text-sm text-foreground mb-2 line-clamp-2">{product.name}</h3>
                     <div className="flex items-center gap-2">
                       <span className="font-body font-bold text-primary">{formatPrice(product.price)}</span>
-                      <span className="font-body text-xs text-muted-foreground line-through">
-                        {formatPrice(product.originalPrice)}
-                      </span>
+                      {product.originalPrice && (
+                        <span className="font-body text-xs text-muted-foreground line-through">
+                          {formatPrice(product.originalPrice)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </Link>

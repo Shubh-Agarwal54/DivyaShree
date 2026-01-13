@@ -4,17 +4,46 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductGrid from '@/components/ProductGrid';
 import { getSaleProducts } from '@/data/products';
+import { productAPI } from '@/services/product.api';
 import { ChevronRight, Tag, TrendingDown } from 'lucide-react';
 import { useFadeUpScroll, useStaggerScroll } from '@/hooks/useScrollAnimations';
 
 export default function Sale() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const titleRef = useFadeUpScroll({ duration: 0.8 });
   const gridRef = useStaggerScroll({ stagger: 0.1, yOffset: 40 });
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    setProducts(getSaleProducts());
+    
+    // Fetch sale products from API
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const result = await productAPI.getAllProducts({ limit: 50 });
+        if (result.success && result.data && result.data.products) {
+          // Filter products on sale (with originalPrice > price or salePercentage > 0)
+          const saleProducts = result.data.products.filter(p => 
+            (p.originalPrice && p.originalPrice > p.price) || (p.salePercentage && p.salePercentage > 0)
+          );
+          if (saleProducts.length > 0) {
+            setProducts(saleProducts);
+          } else {
+            setProducts(getSaleProducts());
+          }
+        } else {
+          setProducts(getSaleProducts());
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setProducts(getSaleProducts());
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProducts();
   }, []);
 
   const maxDiscount = products.length > 0 
