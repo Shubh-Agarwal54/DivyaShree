@@ -3,23 +3,36 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductGrid from '@/components/ProductGrid';
 import { Filter, X } from 'lucide-react';
+import { productAPI } from '@/services/product.api';
+import { getProductsByCategory } from '@/data/products';
 
 const Lehengas = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ price: 'all', sortBy: 'featured' });
 
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => { 
+    window.scrollTo(0, 0); 
+    fetchProducts();
+  }, []);
 
-  const products = Array.from({ length: 12 }, (_, i) => ({
-    id: i + 1,
-    name: `Designer Lehenga ${i + 1}`,
-    price: 8999 + (i * 1000),
-    originalPrice: 14999 + (i * 1000),
-    image: `https://placehold.co/400x600/8B0000/FFF?text=Lehenga+${i + 1}`,
-    rating: 4.8,
-    reviews: 95 + i,
-    badge: i % 2 === 0 ? 'Bestseller' : '',
-  }));
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const result = await productAPI.getAllProducts({ category: 'lehengas', limit: 50 });
+      if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+        setProducts(result.data.products);
+      } else {
+        setProducts(getProductsByCategory('lehengas'));
+      }
+    } catch (error) {
+      console.error('Error fetching lehengas:', error);
+      setProducts(getProductsByCategory('lehengas'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">

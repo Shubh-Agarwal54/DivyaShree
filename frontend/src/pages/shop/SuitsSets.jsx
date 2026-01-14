@@ -2,21 +2,35 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductGrid from '@/components/ProductGrid';
+import { productAPI } from '@/services/product.api';
+import { getProductsByCategory } from '@/data/products';
 
 const SuitsSets = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('featured');
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  
+  useEffect(() => { 
+    window.scrollTo(0, 0); 
+    fetchProducts();
+  }, []);
 
-  const products = Array.from({ length: 12 }, (_, i) => ({
-    id: i + 1,
-    name: `Elegant Suit Set ${i + 1}`,
-    price: 3999 + (i * 500),
-    originalPrice: 6999 + (i * 500),
-    image: `https://placehold.co/400x600/8B0000/FFF?text=Suit+${i + 1}`,
-    rating: 4.6,
-    reviews: 78 + i,
-    badge: i % 3 === 0 ? 'New Arrival' : '',
-  }));
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const result = await productAPI.getAllProducts({ category: 'suits', limit: 50 });
+      if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+        setProducts(result.data.products);
+      } else {
+        setProducts(getProductsByCategory('suits'));
+      }
+    } catch (error) {
+      console.error('Error fetching suits:', error);
+      setProducts(getProductsByCategory('suits'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">

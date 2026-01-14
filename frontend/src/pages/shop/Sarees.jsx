@@ -4,8 +4,12 @@ import { Filter, ChevronDown, X } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductGrid from '@/components/ProductGrid';
+import { productAPI } from '@/services/product.api';
+import { getProductsByCategory } from '@/data/products';
 
 const Sarees = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     price: 'all',
@@ -16,18 +20,25 @@ const Sarees = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    fetchProducts();
   }, []);
 
-  const products = Array.from({ length: 12 }, (_, i) => ({
-    id: i + 1,
-    name: `Elegant Saree ${i + 1}`,
-    price: 2999 + (i * 500),
-    originalPrice: 4999 + (i * 500),
-    image: `https://placehold.co/400x600/8B0000/FFF?text=Saree+${i + 1}`,
-    rating: 4.5,
-    reviews: 120 + i,
-    badge: i % 3 === 0 ? 'New Arrival' : i % 3 === 1 ? 'Bestseller' : '',
-  }));
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const result = await productAPI.getAllProducts({ category: 'sarees', limit: 50 });
+      if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+        setProducts(result.data.products);
+      } else {
+        setProducts(getProductsByCategory('sarees'));
+      }
+    } catch (error) {
+      console.error('Error fetching sarees:', error);
+      setProducts(getProductsByCategory('sarees'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">

@@ -20,7 +20,7 @@ const Index = () => {
         <HeroBanner />
         <CategorySection />
         <BestsellerSection />
-        <CuratedSection />
+        {/* <CuratedSection /> */}
         <ModernShehzadi />
         <AppExclusive />
         <ProductGrid subtitle="IN FOCUS NOW" />

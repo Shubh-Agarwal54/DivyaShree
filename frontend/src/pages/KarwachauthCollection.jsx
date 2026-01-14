@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Star, SlidersHorizontal } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import productAPI from '@/services/product.api';
 import product1 from '@/assets/product-1.jpg';
 import product2 from '@/assets/product-2.jpg';
 import product3 from '@/assets/product-3.jpg';
@@ -12,7 +13,7 @@ import product6 from '@/assets/product-6.jpg';
 import product7 from '@/assets/product-7.jpg';
 import product8 from '@/assets/product-8.jpg';
 
-const products = [
+const fallbackProducts = [
   { id: 1, name: 'Crimson Red Silk Saree', image: product2, price: 15999, originalPrice: 22999, rating: 4.8, reviews: 256 },
   { id: 2, name: 'Pink Tissue Lehenga', image: product1, price: 12999, originalPrice: 18999, rating: 4.5, reviews: 128 },
   { id: 3, name: 'Magenta Anarkali Set', image: product5, price: 45999, originalPrice: 65999, rating: 5.0, reviews: 456 },
@@ -24,8 +25,27 @@ const products = [
 ];
 
 const KarwachauthCollection = () => {
+  const [products, setProducts] = useState(fallbackProducts);
+  const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('featured');
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  
+  useEffect(() => { 
+    window.scrollTo(0, 0);
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const result = await productAPI.getAllProducts({ occasion: 'karwachauth', limit: 50 });
+        if (result.success && result.data?.products?.length > 0) {
+          setProducts(result.data.products);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const formatPrice = (price) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
   const calculateDiscount = (original, current) => Math.round(((original - current) / original) * 100);
@@ -67,9 +87,9 @@ const KarwachauthCollection = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {products.map((product, index) => (
-              <Link key={product.id} to={`/product/${product.id}`} className="group product-card animate-fade-up" style={{ animationDelay: `${index * 0.05}s` }}>
+              <Link key={product._id || product.id} to={`/product/${product._id || product.id}`} className="group product-card animate-fade-up" style={{ animationDelay: `${index * 0.05}s` }}>
                 <div className="relative overflow-hidden aspect-[3/4]">
-                  <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <img src={product.images?.[0] || product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   <button className="absolute top-3 right-3 w-8 h-8 bg-background/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary hover:text-primary-foreground">
                     <Heart size={16} />
                   </button>

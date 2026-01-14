@@ -27,7 +27,8 @@ const ProductForm = () => {
   });
 
   const categories = ['sarees', 'lehengas', 'kurtis', 'suits', 'gowns'];
-  const occasions = ['wedding', 'festival', 'party', 'casual', 'formal', 'sangeet', 'mehendi', 'haldi'];
+  const fabrics = ['Georgette', 'Silk', 'Organza', 'Tissue', 'Cotton', 'Chiffon', 'Velvet', 'Net', 'Brocade', 'Chanderi'];
+  const occasions = ['diwali', 'puja', 'mehndi', 'sangeet', 'haldi', 'reception', 'wedding', 'karwachauth', 'festival', 'party', 'casual', 'formal', 'bridal'];
 
   useEffect(() => {
     if (isEditMode) {
@@ -118,10 +119,16 @@ const ProductForm = () => {
 
     try {
       setSubmitting(true);
+      const price = parseFloat(formData.price);
+      const originalPrice = parseFloat(formData.originalPrice) || 0;
+      
+      // Ensure originalPrice is >= price to avoid negative sale percentage
+      const finalOriginalPrice = originalPrice > price ? originalPrice : price;
+      
       const data = {
         ...formData,
-        price: parseFloat(formData.price),
-        originalPrice: parseFloat(formData.originalPrice) || parseFloat(formData.price),
+        price: price,
+        originalPrice: finalOriginalPrice,
         stockQuantity: parseInt(formData.stockQuantity) || 0,
         features: formData.features.filter(f => f.trim() !== '')
       };
@@ -267,14 +274,17 @@ const ProductForm = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="font-body text-sm font-medium text-gray-700">Fabric</label>
-                  <input
-                    type="text"
+                  <select
                     name="fabric"
                     value={formData.fabric}
                     onChange={handleChange}
                     className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] focus:border-transparent"
-                    placeholder="e.g., Silk, Cotton"
-                  />
+                  >
+                    <option value="">Select fabric</option>
+                    {fabrics.map(fabric => (
+                      <option key={fabric} value={fabric}>{fabric}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="font-body text-sm font-medium text-gray-700">Color</label>

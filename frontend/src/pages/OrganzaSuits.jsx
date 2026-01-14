@@ -4,14 +4,32 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductGrid from '@/components/ProductGrid';
 import { getProductsByFabric } from '@/data/products';
+import {productAPI} from '@/services/product.api';
 import { ChevronRight } from 'lucide-react';
 
 export default function OrganzaSuits() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    setProducts(getProductsByFabric('Organza'));
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const result = await productAPI.getAllProducts({ fabric: 'Organza', limit: 50 });
+        if (result.success && result.data?.products?.length > 0) {
+          setProducts(result.data.products);
+        } else {
+          setProducts(getProductsByFabric('Organza'));
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setProducts(getProductsByFabric('Organza'));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
   }, []);
 
   return (

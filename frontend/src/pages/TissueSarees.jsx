@@ -4,14 +4,32 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductGrid from '@/components/ProductGrid';
 import { getProductsByFabric } from '@/data/products';
+import {productAPI} from '@/services/product.api';
 import { ChevronRight } from 'lucide-react';
 
 export default function TissueSarees() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    setProducts(getProductsByFabric('Tissue'));
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const result = await productAPI.getAllProducts({ fabric: 'Tissue', limit: 50 });
+        if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+          setProducts(result.data.products);
+        } else {
+          setProducts(getProductsByFabric('Tissue'));
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setProducts(getProductsByFabric('Tissue'));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
   }, []);
 
   return (

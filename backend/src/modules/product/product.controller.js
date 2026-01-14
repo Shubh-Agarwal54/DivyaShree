@@ -9,6 +9,8 @@ class ProductController {
         limit = 20,
         search = '',
         category = '',
+        fabric = '',
+        occasion = '',
         minPrice = 0,
         maxPrice = 999999,
         inStock = '',
@@ -32,6 +34,8 @@ class ProductController {
 
       // Filters
       if (category) query.category = category;
+      if (fabric) query.fabric = { $regex: fabric, $options: 'i' };
+      if (occasion) query.occasions = { $regex: occasion, $options: 'i' };
       if (inStock !== '') query.inStock = inStock === 'true';
       if (onSale !== '') query.onSale = onSale === 'true';
       if (isBestseller !== '') query.isBestseller = isBestseller === 'true';

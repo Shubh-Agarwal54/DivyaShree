@@ -107,8 +107,10 @@ const productSchema = new mongoose.Schema({
 
 // Auto-calculate sale percentage
 productSchema.pre('save', function(next) {
-  if (this.originalPrice && this.price) {
+  if (this.originalPrice && this.price && this.originalPrice > this.price) {
     this.salePercentage = Math.round(((this.originalPrice - this.price) / this.originalPrice) * 100);
+  } else {
+    this.salePercentage = 0;
   }
   next();
 });

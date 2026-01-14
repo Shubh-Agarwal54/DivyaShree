@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Star, SlidersHorizontal } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { productAPI } from '@/services/product.api';
 import product1 from '@/assets/product-1.jpg';
 import product2 from '@/assets/product-2.jpg';
 import product3 from '@/assets/product-3.jpg';
@@ -12,7 +13,7 @@ import product6 from '@/assets/product-6.jpg';
 import product7 from '@/assets/product-7.jpg';
 import product8 from '@/assets/product-8.jpg';
 
-const products = [
+const fallbackProducts = [
   {
     id: 1,
     name: 'Pink Silk Saree with Gold Embroidery',
@@ -88,11 +89,27 @@ const products = [
 ];
 
 const MehndiHues = () => {
+  const [products, setProducts] = useState(fallbackProducts);
+  const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const result = await productAPI.getAllProducts({ occasion: 'mehndi', limit: 50 });
+        if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+          setProducts(result.data.products);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
   }, []);
 
   const formatPrice = (price) => {
@@ -162,15 +179,15 @@ const MehndiHues = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {products.map((product, index) => (
               <Link
-                key={product.id}
-                to={`/product/${product.id}`}
+                key={product._id || product.id}
+                to={`/product/${product._id || product.id}`}
                 className="group product-card animate-fade-up"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
                 {/* Image container */}
                 <div className="relative overflow-hidden aspect-[3/4]">
                   <img
-                    src={product.image}
+                    src={product.images?.[0] || product.image}
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />

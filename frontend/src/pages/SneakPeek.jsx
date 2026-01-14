@@ -71,9 +71,9 @@ const SneakPeek = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {products.map((product, index) => (
-              <Link key={product.id} to={`/product/${product.id}`} className="group product-card animate-fade-up" style={{ animationDelay: `${index * 0.05}s` }}>
+              <Link key={product._id || product.id} to={`/product/${product._id || product.id}`} className="group product-card animate-fade-up" style={{ animationDelay: `${index * 0.05}s` }}>
                 <div className="relative overflow-hidden aspect-[3/4]">
-                  <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <img src={product.images?.[0] || product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   <button className="absolute top-3 right-3 w-8 h-8 bg-background/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary hover:text-primary-foreground">
                     <Heart size={16} />
                   </button>
