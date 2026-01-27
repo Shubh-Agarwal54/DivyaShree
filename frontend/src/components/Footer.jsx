@@ -104,19 +104,20 @@ const Footer = () => {
               <li className="flex items-start gap-2">
                 <MapPin size={16} className="mt-1 flex-shrink-0" />
                 <span className="font-body text-sm text-primary-foreground/80">
-                  123 Sanjay Place Agra, Uttar Pradesh 282003
+                  Sanjay Place Agra, Uttar Pradesh 282002
                 </span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone size={16} className="flex-shrink-0" />
                 <span className="font-body text-sm text-primary-foreground/80">
-                  +91 98765 43210
+                  +91 8979893427
                 </span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail size={16} className="flex-shrink-0" />
                 <span className="font-body text-sm text-primary-foreground/80">
-                  care@divyashree.com
+                  divyashreefashion2025@gmail.com
+
                 </span>
               </li>
             </ul>
