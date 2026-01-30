@@ -13,7 +13,7 @@ import TestimonialSection from '@/components/TestimonialSection';
 import Footer from '@/components/Footer';
 
 const Index = () => {
-  const whatsappNumber = "8979893427"; // Replace with actual support number
+  const whatsappNumber = "+918979893427"; // Replace with actual support number
   const whatsappMessage = "Hi, I need help with Divya Shree products.";
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
