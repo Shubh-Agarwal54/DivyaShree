@@ -634,7 +634,11 @@ class UserService {
 
   async getWishlist(userId) {
     try {
-      const user = await User.findById(userId);
+      // Populate wishlist with full product details instead of just IDs
+      const user = await User.findById(userId).populate({
+        path: 'wishlist',
+        select: '-__v',
+      });
 
       if (!user) {
         throw new Error('User not found');

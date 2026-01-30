@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }) => {
       if (response.success) {
         setUser(response.data);
         localStorage.setItem('divyashree_user', JSON.stringify(response.data));
+        window.dispatchEvent(new Event('userLoggedIn'));
       } else {
         // Token invalid, clear storage
         localStorage.removeItem('divyashree_user');
@@ -52,6 +53,8 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('divyashree_user', JSON.stringify(user));
         localStorage.setItem('divyashree_token', token);
         setUser(user);
+        // Dispatch event to notify other components
+        window.dispatchEvent(new Event('userLoggedIn'));
         return { success: true };
       } else if (response.requiresVerification) {
         // Return verification requirement info
@@ -93,6 +96,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('divyashree_user');
     localStorage.removeItem('divyashree_token');
     setUser(null);
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event('userLoggedOut'));
   };
 
   const refreshUser = async () => {

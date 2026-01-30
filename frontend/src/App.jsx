@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import WhatsAppButton from "./components/WhatsAppButton";
 import { AuthProvider } from "./context/AuthContext";
 import { AddressProvider } from "./context/AddressContext";
 import { CartProvider } from "./context/CartContext";
@@ -87,6 +88,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <WhatsAppButton />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />

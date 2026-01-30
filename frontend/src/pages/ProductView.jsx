@@ -5,8 +5,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { productAPI } from '@/services/product.api';
+import { wishlistAPI } from '@/services/api';
 import { getProductById } from '@/data/products';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import product1 from '@/assets/product-1.jpg';
 import product2 from '@/assets/product-2.jpg';
 import product3 from '@/assets/product-3.jpg';
@@ -153,13 +154,53 @@ const ProductView = () => {
     
     addToCart(cartItem);
     
-    toast({
-      title: "Added to cart!",
-      description: `${quantity} x ${productData.name} added to your cart.`,
-    });
+    toast.success(`${quantity} x ${productData.name} added to your cart.`);
     
     // Navigate to cart page
     navigate('/cart');
+  };
+
+  const handleAddToWishlist = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const productId = productData._id || productData.id;
+    
+    try {
+      const response = await wishlistAPI.addToWishlist(productId);
+      if (response.success) {
+        toast.success('Added to wishlist!');
+      } else {
+        toast.error(response.message || 'Failed to add to wishlist');
+      }
+    } catch (error) {
+      console.error('Error adding to wishlist:', error);
+      toast.error('Please login to add items to wishlist');
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: productData.name,
+      text: `Check out ${productData.name} - ${formatPrice(productData.price)}`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast.success('Shared successfully!');
+      } else {
+        // Fallback: Copy URL to clipboard
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Product link copied to clipboard!');
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Error sharing:', error);
+        toast.error('Failed to share product');
+      }
+    }
   };
 
   const formatPrice = (price) => {
@@ -209,7 +250,10 @@ const ProductView = () => {
                     {discount}% OFF
                   </div>
                 )}
-                <button className="absolute top-4 right-4 w-10 h-10 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all shadow-lg">
+                <button
+                  onClick={handleAddToWishlist}
+                  className="absolute top-4 right-4 w-10 h-10 bg-background/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all shadow-lg"
+                >
                   <Heart size={20} />
                 </button>
               </div>
@@ -329,10 +373,16 @@ const ProductView = () => {
                 >
                   {productData.inStock ? 'Add to Cart' : 'Out of Stock'}
                 </button>
-                <button className="px-6 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all rounded-sm">
+                <button
+                  onClick={handleAddToWishlist}
+                  className="px-6 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all rounded-sm"
+                >
                   <Heart size={20} />
                 </button>
-                <button className="px-6 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all rounded-sm">
+                <button
+                  onClick={handleShare}
+                  className="px-6 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all rounded-sm"
+                >
                   <Share2 size={20} />
                 </button>
               </div>

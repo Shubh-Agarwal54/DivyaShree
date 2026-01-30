@@ -12,21 +12,101 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [userId, setUserId] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load cart from localStorage on mount
-  useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
+  // Function to get current user ID
+  const getCurrentUserId = () => {
+    const storedUser = localStorage.getItem('divyashree_user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        return user._id || user.id || null;
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        return null;
+      }
     }
+    return null;
+  };
+
+  // Function to load cart for specific user
+  const loadCartForUser = (newUserId) => {
+    const cartKey = newUserId ? `cart_${newUserId}` : 'cart_guest';
+    const savedCart = localStorage.getItem(cartKey);
+    
+    if (savedCart) {
+      try {
+        setCartItems(JSON.parse(savedCart));
+      } catch (error) {
+        console.error('Error loading cart:', error);
+        setCartItems([]);
+      }
+    } else {
+      setCartItems([]);
+    }
+  };
+
+  // Initialize and listen for user changes
+  useEffect(() => {
+    const currentUserId = getCurrentUserId();
+    setUserId(currentUserId);
+    loadCartForUser(currentUserId);
+    setIsInitialized(true);
+
+    // Listen for storage changes (login/logout from another tab)
+    const handleStorageChange = (e) => {
+      if (e.key === 'divyashree_user') {
+        const newUserId = getCurrentUserId();
+        if (newUserId !== userId) {
+          setUserId(newUserId);
+          loadCartForUser(newUserId);
+        }
+      }
+    };
+
+    // Listen for custom login/logout events
+    const handleAuthChange = () => {
+      const newUserId = getCurrentUserId();
+      if (newUserId !== userId) {
+        setUserId(newUserId);
+        loadCartForUser(newUserId);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('userLoggedIn', handleAuthChange);
+    window.addEventListener('userLoggedOut', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userLoggedIn', handleAuthChange);
+      window.removeEventListener('userLoggedOut', handleAuthChange);
+    };
   }, []);
+
+  // Check for user changes periodically (in case events are missed)
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const checkUserChange = setInterval(() => {
+      const currentUserId = getCurrentUserId();
+      if (currentUserId !== userId) {
+        setUserId(currentUserId);
+        loadCartForUser(currentUserId);
+      }
+    }, 1000); // Check every second
+
+    return () => clearInterval(checkUserChange);
+  }, [userId, isInitialized]);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
     if (cartItems.length >= 0) {
-      localStorage.setItem('cart', JSON.stringify(cartItems));
+      const cartKey = userId ? `cart_${userId}` : 'cart_guest';
+      localStorage.setItem(cartKey, JSON.stringify(cartItems));
     }
-  }, [cartItems]);
+  }, [cartItems, userId]);
 
   const addToCart = (product) => {
     setCartItems((prevItems) => {
@@ -62,7 +142,8 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = () => {
     setCartItems([]);
-    localStorage.removeItem('cart');
+    const cartKey = userId ? `cart_${userId}` : 'cart_guest';
+    localStorage.removeItem(cartKey);
   };
 
   const getCartTotal = () => {
