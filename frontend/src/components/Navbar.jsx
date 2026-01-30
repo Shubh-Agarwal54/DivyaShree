@@ -18,8 +18,8 @@ const navLinks = [
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { getCartCount } = useCart();
-  const cartCount = getCartCount();
+  const { getCartItemCount } = useCart();
+  const cartCount = getCartItemCount();
 
   return (
     <header className="sticky top-0 z-50 bg-background">

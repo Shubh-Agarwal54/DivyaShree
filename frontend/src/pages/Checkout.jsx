@@ -82,19 +82,19 @@ export default function Checkout() {
     }).format(price);
   };
 
-  const updateItemQuantity = (id, action) => {
-    const item = cartItems.find(item => item.id === id);
+  const updateItemQuantity = (productId, action) => {
+    const item = cartItems.find(item => item.productId === productId);
     if (!item) return;
 
     if (action === 'increase') {
-      updateQuantity(id, item.quantity + 1);
+      updateQuantity(productId, item.quantity + 1);
     } else {
-      updateQuantity(id, Math.max(1, item.quantity - 1));
+      updateQuantity(productId, Math.max(1, item.quantity - 1));
     }
   };
 
-  const removeItem = (id) => {
-    removeFromCart(id);
+  const removeItem = (productId) => {
+    removeFromCart(productId);
     // If cart becomes empty, redirect to cart page
     if (cartItems.length === 1) {
       navigate('/cart');
@@ -166,7 +166,7 @@ export default function Checkout() {
       // Prepare order data
       const orderData = {
         items: cartItems.map(item => ({
-          productId: item.id,
+          productId: item.productId,
           name: item.name,
           price: item.price,
           quantity: item.quantity,
@@ -311,9 +311,9 @@ export default function Checkout() {
 
                   <div className="space-y-4 mb-6">
                     {cartItems.map((item) => (
-                      <div key={item.id} className="flex gap-4 p-4 border border-border rounded-lg hover:shadow-card transition-all">
+                      <div key={item.productId} className="flex gap-4 p-4 border border-border rounded-lg hover:shadow-card transition-all">
                         <img
-                          src={item.image}
+                          src={item.images}
                           alt={item.name}
                           className="w-20 h-24 object-cover rounded-md"
                         />
@@ -325,14 +325,14 @@ export default function Checkout() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 border border-border rounded-sm">
                               <button
-                                onClick={() => updateItemQuantity(item.id, 'decrease')}
+                                onClick={() => updateItemQuantity(item.productId, 'decrease')}
                                 className="p-2 hover:bg-muted"
                               >
                                 <Minus size={14} />
                               </button>
                               <span className="px-3 font-body text-sm">{item.quantity}</span>
                               <button
-                                onClick={() => updateItemQuantity(item.id, 'increase')}
+                                onClick={() => updateItemQuantity(item.productId, 'increase')}
                                 className="p-2 hover:bg-muted"
                               >
                                 <Plus size={14} />
@@ -343,7 +343,7 @@ export default function Checkout() {
                                 {formatPrice(item.price * item.quantity)}
                               </span>
                               <button
-                                onClick={() => removeItem(item.id)}
+                                onClick={() => removeItem(item.productId)}
                                 className="text-destructive hover:text-destructive/80"
                               >
                                 <Trash2 size={18} />
@@ -840,9 +840,9 @@ export default function Checkout() {
 
                   <div className="space-y-3 mb-6 pb-6 border-b border-border">
                     {cartItems.map((item) => (
-                      <div key={item.id} className="flex gap-3">
+                      <div key={item.productId} className="flex gap-3">
                         <img
-                          src={item.image}
+                          src={item.images}
                           alt={item.name}
                           className="w-16 h-20 object-cover rounded-md"
                         />

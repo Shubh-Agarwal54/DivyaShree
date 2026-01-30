@@ -7,7 +7,7 @@ import { useCart } from '@/context/CartContext';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cartItems, updateQuantity, removeFromCart, getCartTotal, getCartCount } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, getCartTotal, getCartItemCount } = useCart();
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
 
@@ -24,19 +24,19 @@ const Cart = () => {
     }).format(price);
   };
 
-  const handleQuantityChange = (id, type) => {
-    const item = cartItems.find(item => item.id === id);
+  const handleQuantityChange = (productId, type) => {
+    const item = cartItems.find(item => item.productId === productId);
     if (!item) return;
 
     if (type === 'increase') {
-      updateQuantity(id, item.quantity + 1);
+      updateQuantity(productId, item.quantity + 1);
     } else if (type === 'decrease' && item.quantity > 1) {
-      updateQuantity(id, item.quantity - 1);
+      updateQuantity(productId, item.quantity - 1);
     }
   };
 
-  const handleRemoveItem = (id) => {
-    removeFromCart(id);
+  const handleRemoveItem = (productId) => {
+    removeFromCart(productId);
   };
 
   const calculateSubtotal = () => {
@@ -107,7 +107,7 @@ const Cart = () => {
           <div className="text-center mb-8 md:mb-12">
             <h1 className="font-display text-3xl md:text-5xl text-foreground mb-2">Shopping Cart</h1>
             <p className="font-body text-muted-foreground">
-              {getCartCount()} {getCartCount() === 1 ? 'item' : 'items'} in your cart
+              {getCartItemCount()} {getCartItemCount() === 1 ? 'item' : 'items'} in your cart
             </p>
           </div>
 
@@ -116,29 +116,29 @@ const Cart = () => {
             <div className="lg:col-span-2 space-y-4">
               {cartItems.map((item) => (
                 <div
-                  key={item.id}
+                  key={item.productId}
                   className="bg-card p-4 md:p-6 rounded-lg shadow-card border border-border hover:shadow-hover transition-all"
                 >
                   <div className="flex gap-4">
                     {/* Product Image */}
                     <Link
-                      to={`/product/${item.id}`}
+                      to={`/product/${item.productId}`}
                       className="relative w-24 h-32 md:w-32 md:h-40 flex-shrink-0 rounded-md overflow-hidden bg-muted"
                     >
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.images} alt={item.name} className="w-full h-full object-cover" />
                     </Link>
 
                     {/* Product Details */}
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between gap-4 mb-2">
                         <Link
-                          to={`/product/${item.id}`}
+                          to={`/product/${item.productId}`}
                           className="font-body font-medium text-foreground hover:text-primary transition-colors line-clamp-2"
                         >
                           {item.name}
                         </Link>
                         <button
-                          onClick={() => handleRemoveItem(item.id)}
+                          onClick={() => handleRemoveItem(item.productId)}
                           className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
                           aria-label="Remove item"
                         >
@@ -165,7 +165,7 @@ const Cart = () => {
                         {/* Quantity Controls */}
                         <div className="flex items-center border-2 border-border rounded-sm">
                           <button
-                            onClick={() => handleQuantityChange(item.id, 'decrease')}
+                            onClick={() => handleQuantityChange(item.productId, 'decrease')}
                             className="p-2 hover:bg-muted transition-colors"
                             aria-label="Decrease quantity"
                           >
@@ -173,7 +173,7 @@ const Cart = () => {
                           </button>
                           <span className="px-4 font-body font-medium min-w-[40px] text-center">{item.quantity}</span>
                           <button
-                            onClick={() => handleQuantityChange(item.id, 'increase')}
+                            onClick={() => handleQuantityChange(item.productId, 'increase')}
                             className="p-2 hover:bg-muted transition-colors"
                             aria-label="Increase quantity"
                           >

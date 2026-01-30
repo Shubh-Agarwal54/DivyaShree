@@ -425,6 +425,125 @@ class UserController {
     }
   }
 
+  // Get cart
+  async getCart(req, res) {
+    try {
+      const result = await userService.getCart(req.userId);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch cart',
+        error: error.message,
+      });
+    }
+  }
+
+  // Add to cart
+  async addToCart(req, res) {
+    try {
+      const { productId, quantity, size, color } = req.body;
+      
+      if (!productId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Product ID is required',
+        });
+      }
+
+      const result = await userService.addToCart(req.userId, {
+        productId,
+        quantity,
+        size,
+        color,
+      });
+      
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to add item to cart',
+        error: error.message,
+      });
+    }
+  }
+
+  // Update cart item
+  async updateCartItem(req, res) {
+    try {
+      const { productId } = req.params;
+      const { quantity } = req.body;
+
+      if (quantity === undefined) {
+        return res.status(400).json({
+          success: false,
+          message: 'Quantity is required',
+        });
+      }
+
+      const result = await userService.updateCartItem(req.userId, productId, quantity);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update cart item',
+        error: error.message,
+      });
+    }
+  }
+
+  // Remove from cart
+  async removeFromCart(req, res) {
+    try {
+      const { productId } = req.params;
+      const result = await userService.removeFromCart(req.userId, productId);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to remove item from cart',
+        error: error.message,
+      });
+    }
+  }
+
+  // Clear cart
+  async clearCart(req, res) {
+    try {
+      const result = await userService.clearCart(req.userId);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to clear cart',
+        error: error.message,
+      });
+    }
+  }
+
+  // Sync cart
+  async syncCart(req, res) {
+    try {
+      const { cartItems } = req.body;
+      
+      if (!Array.isArray(cartItems)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cart items must be an array',
+        });
+      }
+
+      const result = await userService.syncCart(req.userId, cartItems);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to sync cart',
+        error: error.message,
+      });
+    }
+  }
+
   // Google OAuth Callback Handler
   async googleCallback(req, res) {
     try {

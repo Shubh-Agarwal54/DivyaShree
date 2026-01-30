@@ -652,6 +652,213 @@ class UserService {
       throw error;
     }
   }
+
+  // Get user's cart
+  async getCart(userId) {
+    try {
+      const user = await User.findById(userId).populate({
+        path: 'cart.product',
+        select: '-__v',
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      return {
+        success: true,
+        data: user.cart || [],
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Add item to cart
+  async addToCart(userId, cartItem) {
+    try {
+      const { productId, quantity, size, color } = cartItem;
+      
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Check if product already exists in cart
+      const existingItemIndex = user.cart.findIndex(
+        item => item.product.toString() === productId
+      );
+
+      if (existingItemIndex > -1) {
+        // Update quantity if product exists
+        user.cart[existingItemIndex].quantity += quantity || 1;
+        user.cart[existingItemIndex].size = size || user.cart[existingItemIndex].size;
+        user.cart[existingItemIndex].color = color || user.cart[existingItemIndex].color;
+      } else {
+        // Add new item to cart
+        user.cart.push({
+          product: productId,
+          quantity: quantity || 1,
+          size,
+          color,
+        });
+      }
+
+      await user.save();
+
+      // Return updated cart with populated products
+      const updatedUser = await User.findById(userId).populate({
+        path: 'cart.product',
+        select: '-__v',
+      });
+
+      return {
+        success: true,
+        message: 'Item added to cart',
+        data: updatedUser.cart,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Update cart item quantity
+  async updateCartItem(userId, productId, quantity) {
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const itemIndex = user.cart.findIndex(
+        item => item.product.toString() === productId
+      );
+
+      if (itemIndex === -1) {
+        throw new Error('Item not found in cart');
+      }
+
+      if (quantity <= 0) {
+        // Remove item if quantity is 0 or less
+        user.cart.splice(itemIndex, 1);
+      } else {
+        user.cart[itemIndex].quantity = quantity;
+      }
+
+      await user.save();
+
+      const updatedUser = await User.findById(userId).populate({
+        path: 'cart.product',
+        select: '-__v',
+      });
+
+      return {
+        success: true,
+        message: 'Cart updated',
+        data: updatedUser.cart,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Remove item from cart
+  async removeFromCart(userId, productId) {
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      user.cart = user.cart.filter(
+        item => item.product.toString() !== productId
+      );
+
+      await user.save();
+
+      const updatedUser = await User.findById(userId).populate({
+        path: 'cart.product',
+        select: '-__v',
+      });
+
+      return {
+        success: true,
+        message: 'Item removed from cart',
+        data: updatedUser.cart,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Clear entire cart
+  async clearCart(userId) {
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      user.cart = [];
+      await user.save();
+
+      return {
+        success: true,
+        message: 'Cart cleared',
+        data: [],
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Sync cart (merge localStorage cart with database cart)
+  async syncCart(userId, localCartItems) {
+    try {
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Merge local cart with database cart
+      for (const localItem of localCartItems) {
+        const existingItemIndex = user.cart.findIndex(
+          item => item.product.toString() === localItem.productId
+        );
+
+        if (existingItemIndex > -1) {
+          // Update quantity (keep the higher quantity)
+          user.cart[existingItemIndex].quantity = Math.max(
+            user.cart[existingItemIndex].quantity,
+            localItem.quantity || 1
+          );
+        } else {
+          // Add new item
+          user.cart.push({
+            product: localItem.productId,
+            quantity: localItem.quantity || 1,
+            size: localItem.size,
+            color: localItem.color,
+          });
+        }
+      }
+
+      await user.save();
+
+      const updatedUser = await User.findById(userId).populate({
+        path: 'cart.product',
+        select: '-__v',
+      });
+
+      return {
+        success: true,
+        message: 'Cart synced',
+        data: updatedUser.cart,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = new UserService();

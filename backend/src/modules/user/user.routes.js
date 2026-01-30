@@ -45,4 +45,12 @@ router.get('/wishlist', authMiddleware, userController.getWishlist);
 router.post('/wishlist', authMiddleware, userController.addToWishlist);
 router.delete('/wishlist/:productId', authMiddleware, userController.removeFromWishlist);
 
+// Cart routes
+router.get('/cart', authMiddleware, userController.getCart);
+router.post('/cart', authMiddleware, userController.addToCart);
+router.post('/cart/sync', authMiddleware, userController.syncCart);
+router.put('/cart/:productId', authMiddleware, userController.updateCartItem);
+router.delete('/cart/:productId', authMiddleware, userController.removeFromCart);
+router.delete('/cart', authMiddleware, userController.clearCart);
+
 module.exports = router;

@@ -190,6 +190,65 @@ export const wishlistAPI = {
   },
 };
 
+// Cart APIs
+export const cartAPI = {
+  // Get cart
+  getCart: async () => {
+    const response = await fetch(`${API_BASE_URL}/user/cart`, {
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  // Add to cart
+  addToCart: async (productId, quantity = 1, size = null, color = null) => {
+    const response = await fetch(`${API_BASE_URL}/user/cart`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ productId, quantity, size, color }),
+    });
+    return response.json();
+  },
+
+  // Update cart item
+  updateCartItem: async (productId, quantity) => {
+    const response = await fetch(`${API_BASE_URL}/user/cart/${productId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ quantity }),
+    });
+    return response.json();
+  },
+
+  // Remove from cart
+  removeFromCart: async (productId) => {
+    const response = await fetch(`${API_BASE_URL}/user/cart/${productId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  // Clear cart
+  clearCart: async () => {
+    const response = await fetch(`${API_BASE_URL}/user/cart`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  // Sync cart (merge localStorage with database)
+  syncCart: async (cartItems) => {
+    const response = await fetch(`${API_BASE_URL}/user/cart/sync`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ cartItems }),
+    });
+    return response.json();
+  },
+};
+
 // Order APIs
 export const orderAPI = {
   // Create order
@@ -241,5 +300,6 @@ export default {
   ...userAPI,
   ...addressAPI,
   ...wishlistAPI,
+  ...cartAPI,
   ...orderAPI,
 };

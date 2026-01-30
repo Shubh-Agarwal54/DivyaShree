@@ -142,11 +142,12 @@ const ProductView = () => {
   const handleAddToCart = () => {
     // Create cart item with selected options
     const cartItem = {
-      id: productData._id || productData.id,
+      _id: productData._id || productData.id,
       name: productData.name,
       price: productData.price,
       quantity: quantity,
       image: productImages[0],
+      images: productImages,
       size: selectedSize,
       color: selectedColor,
       category: productData.category,
