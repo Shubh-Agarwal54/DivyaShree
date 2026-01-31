@@ -163,7 +163,7 @@ const ProductGrid = ({ title, subtitle, limit = 8 }) => {
               <Link
                 key={productId}
                 to={`/product/${productId}`}
-                className="group product-card animate-fade-up"
+                className="group product-card animate-fade-up rounded-lg overflow-hidden"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
                 {/* Image container */}

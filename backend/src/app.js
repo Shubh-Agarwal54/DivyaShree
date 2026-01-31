@@ -10,6 +10,7 @@ const userRoutes = require('./modules/user/user.routes');
 const orderRoutes = require('./modules/order/order.routes');
 const adminRoutes = require('./modules/admin/admin.routes');
 const productRoutes = require('./modules/product/product.routes');
+const reviewRoutes = require('./modules/product/review.routes');
 
 const app = express();
 
@@ -86,6 +87,7 @@ app.get('/health/email', async (req, res) => {
 app.use('/api/user', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/products', productRoutes); // Public product routes
+app.use('/api/reviews', reviewRoutes); // Review routes
 app.use('/api/admin', adminRoutes); // Admin routes
 
 // 404 Handler

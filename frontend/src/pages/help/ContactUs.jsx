@@ -29,21 +29,21 @@ const ContactUs = () => {
               <div className="bg-card p-6 rounded-lg border border-border">
                 <Phone className="w-10 h-10 text-primary mb-4" />
                 <h3 className="font-display text-lg mb-2">Phone</h3>
-                <p className="font-body text-muted-foreground">+91 98765 43210</p>
+                <p className="font-body text-muted-foreground">+91  8979893427</p>
                 <p className="font-body text-sm text-muted-foreground mt-1">Mon-Sat, 10 AM - 7 PM</p>
               </div>
 
               <div className="bg-card p-6 rounded-lg border border-border">
                 <Mail className="w-10 h-10 text-primary mb-4" />
                 <h3 className="font-display text-lg mb-2">Email</h3>
-                <p className="font-body text-muted-foreground">care@divyashree.com</p>
+                <p className="font-body text-muted-foreground">divyashreefashion2025@gmail.com</p>
                 <p className="font-body text-sm text-muted-foreground mt-1">We reply within 24 hours</p>
               </div>
 
               <div className="bg-card p-6 rounded-lg border border-border">
                 <MapPin className="w-10 h-10 text-primary mb-4" />
                 <h3 className="font-display text-lg mb-2">Visit Us</h3>
-                <p className="font-body text-muted-foreground">123 Sanjay Place Agra, Uttar Pradesh 282003</p>
+                <p className="font-body text-muted-foreground">Sanjay Place Agra, Uttar Pradesh 282002</p>
               </div>
             </div>
 

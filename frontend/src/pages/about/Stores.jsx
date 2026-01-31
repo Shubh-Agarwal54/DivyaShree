@@ -9,46 +9,46 @@ const Stores = () => {
   const stores = [
     {
       city: 'Agra (Flagship Store)',
-      address: '123 Sanjay Place, Near Taj Mahal, Agra, Uttar Pradesh 282003',
-      phone: '+91 98765 43210',
-      hours: 'Mon-Sun: 10:00 AM - 8:00 PM',
+      address: 'Sanjay Place, Near Taj Mahal, Agra, Uttar Pradesh 282003',
+      phone: '+91 89798 93427',
+      hours: 'Mon-Sun: 10:00 AM - 10:00 PM',
       mapLink: '#',
     },
-    {
-      city: 'Delhi',
-      address: '456 Connaught Place, Central Delhi, New Delhi 110001',
-      phone: '+91 98765 43211',
-      hours: 'Mon-Sun: 10:00 AM - 9:00 PM',
-      mapLink: '#',
-    },
-    {
-      city: 'Mumbai',
-      address: '789 Linking Road, Bandra West, Mumbai, Maharashtra 400050',
-      phone: '+91 98765 43212',
-      hours: 'Mon-Sun: 10:00 AM - 9:00 PM',
-      mapLink: '#',
-    },
-    {
-      city: 'Bangalore',
-      address: '321 MG Road, Koramangala, Bangalore, Karnataka 560034',
-      phone: '+91 98765 43213',
-      hours: 'Mon-Sun: 10:00 AM - 8:30 PM',
-      mapLink: '#',
-    },
-    {
-      city: 'Jaipur',
-      address: '654 MI Road, C-Scheme, Jaipur, Rajasthan 302001',
-      phone: '+91 98765 43214',
-      hours: 'Mon-Sun: 10:00 AM - 8:00 PM',
-      mapLink: '#',
-    },
-    {
-      city: 'Kolkata',
-      address: '987 Park Street, Central Kolkata, Kolkata, West Bengal 700016',
-      phone: '+91 98765 43215',
-      hours: 'Mon-Sun: 10:00 AM - 8:30 PM',
-      mapLink: '#',
-    },
+    // {
+    //   city: 'Delhi',
+    //   address: '456 Connaught Place, Central Delhi, New Delhi 110001',
+    //   phone: '+91 98765 43211',
+    //   hours: 'Mon-Sun: 10:00 AM - 9:00 PM',
+    //   mapLink: '#',
+    // },
+    // {
+    //   city: 'Mumbai',
+    //   address: '789 Linking Road, Bandra West, Mumbai, Maharashtra 400050',
+    //   phone: '+91 98765 43212',
+    //   hours: 'Mon-Sun: 10:00 AM - 9:00 PM',
+    //   mapLink: '#',
+    // },
+    // {
+    //   city: 'Bangalore',
+    //   address: '321 MG Road, Koramangala, Bangalore, Karnataka 560034',
+    //   phone: '+91 98765 43213',
+    //   hours: 'Mon-Sun: 10:00 AM - 8:30 PM',
+    //   mapLink: '#',
+    // },
+    // {
+    //   city: 'Jaipur',
+    //   address: '654 MI Road, C-Scheme, Jaipur, Rajasthan 302001',
+    //   phone: '+91 98765 43214',
+    //   hours: 'Mon-Sun: 10:00 AM - 8:00 PM',
+    //   mapLink: '#',
+    // },
+    // {
+    //   city: 'Kolkata',
+    //   address: '987 Park Street, Central Kolkata, Kolkata, West Bengal 700016',
+    //   phone: '+91 98765 43215',
+    //   hours: 'Mon-Sun: 10:00 AM - 8:30 PM',
+    //   mapLink: '#',
+    // },
   ];
 
   return (
@@ -64,7 +64,7 @@ const Stores = () => {
           </div>
 
           {/* Stores Grid */}
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-1 gap-8">
             {stores.map((store, index) => (
               <div key={index} className="bg-card p-6 md:p-8 rounded-lg shadow-card border border-border hover:shadow-hover transition-all">
                 <h2 className="font-display text-2xl text-primary mb-6">{store.city}</h2>

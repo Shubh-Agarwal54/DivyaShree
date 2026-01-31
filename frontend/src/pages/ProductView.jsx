@@ -4,8 +4,10 @@ import { Heart, Share2, Star, Truck, RefreshCw, Shield, ChevronRight, Minus, Plu
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { productAPI } from '@/services/product.api';
 import { wishlistAPI } from '@/services/api';
+import { reviewAPI } from '@/services/review.api';
 import { getProductById } from '@/data/products';
 import { toast } from 'sonner';
 import product1 from '@/assets/product-1.jpg';
@@ -25,6 +27,7 @@ const ProductView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('Free Size');
@@ -33,7 +36,47 @@ const ProductView = () => {
   const [productData, setProductData] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    name: '',
+    email: '',
+    rating: 5,
+    comment: ''
+  });
+  const [submittingReview, setSubmittingReview] = useState(false);
   
+  // Debug: Log user when it changes
+  useEffect(() => {
+    console.log('Current user in ProductView:', user);
+  }, [user]);
+  
+  // Fetch reviews for product
+  const fetchReviews = async (productId) => {
+    try {
+      const [reviewsResult, statsResult] = await Promise.all([
+        reviewAPI.getProductReviews(productId, { limit: 50 }),
+        reviewAPI.getReviewStats(productId)
+      ]);
+
+      console.log('Reviews result:', reviewsResult);
+      console.log('Stats result:', statsResult);
+
+      if (reviewsResult.success && reviewsResult.data) {
+        setReviews(reviewsResult.data.reviews || []);
+        console.log('Updated reviews:', reviewsResult.data.reviews?.length || 0);
+      }
+
+      if (statsResult.success && statsResult.data) {
+        setReviewStats(statsResult.data);
+        console.log('Updated stats:', statsResult.data);
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  };
+
   // Fetch product data from API or fallback
   useEffect(() => {
     const fetchProduct = async () => {
@@ -49,11 +92,14 @@ const ProductView = () => {
               setSelectedColor(result.data.color);
             }
             
-            // Fetch related products
+            // Fetch related products and reviews
             const relatedResult = await productAPI.getRelatedProducts(id);
             if (relatedResult.success && relatedResult.data) {
               setRelatedProducts(relatedResult.data || []);
             }
+            
+            // Fetch reviews
+            fetchReviews(id);
           } else {
             console.error('Product not found or API failed:', result);
             setProductData(null);
@@ -210,6 +256,97 @@ const ProductView = () => {
       currency: 'INR',
       maximumFractionDigits: 0,
     }).format(price);
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate comment first
+    if (!reviewForm.comment || reviewForm.comment.trim().length === 0) {
+      toast.error('Please write a review comment');
+      return;
+    }
+
+    if (reviewForm.comment.length < 10) {
+      toast.error('Review comment must be at least 10 characters');
+      return;
+    }
+
+    // Get name and email - construct name properly from user object
+    let userName, userEmail;
+    
+    if (user) {
+      // User is logged in - construct name from available fields
+      if (user.googleProfile?.displayName) {
+        userName = user.googleProfile.displayName;
+      } else if (user.firstName || user.lastName) {
+        userName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+      } else {
+        userName = user.email?.split('@')[0] || 'User';
+      }
+      userEmail = user.email || '';
+    } else {
+      // Guest user
+      userName = reviewForm.name || '';
+      userEmail = reviewForm.email || '';
+      
+      if (!userName) {
+        toast.error('Please enter your name');
+        return;
+      }
+    }
+
+    // Debug log
+    console.log('Submitting review with:', {
+      user: user,
+      userName,
+      userEmail,
+      rating: reviewForm.rating,
+      comment: reviewForm.comment,
+      isLoggedIn: !!user
+    });
+
+    setSubmittingReview(true);
+    
+    try {
+      const result = await reviewAPI.createReview(id, {
+        name: userName,
+        email: userEmail,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment
+      });
+
+      if (result.success) {
+        toast.success('Review submitted successfully!');
+        setReviewForm({ name: '', email: '', rating: 5, comment: '' });
+        setShowReviewForm(false);
+        // Refresh reviews and update product data
+        await fetchReviews(id);
+        // Update product data to reflect new review count
+        if (productData) {
+          setProductData({
+            ...productData,
+            reviews: (productData.reviews || 0) + 1
+          });
+        }
+      } else {
+        toast.error(result.message || 'Failed to submit review');
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      toast.error('Failed to submit review');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
   };
 
   return (
@@ -452,33 +589,164 @@ const ProductView = () => {
 
               {activeTab === 'reviews' && (
                 <div className="space-y-6">
-                  <div className="flex items-center gap-6 mb-6">
+                  {/* Review Stats */}
+                  <div className="flex items-center justify-between gap-6 mb-6">
                     <div>
-                      <div className="text-5xl font-bold text-primary">{productData.rating}</div>
+                      <div className="text-5xl font-bold text-primary">
+                        {reviewStats?.averageRating || productData.rating || 0}
+                      </div>
                       <div className="flex items-center gap-1 mt-1">
                         {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={16} className="fill-gold text-gold" />
+                          <Star 
+                            key={i} 
+                            size={16} 
+                            className={i < Math.floor(reviewStats?.averageRating || productData.rating || 0) 
+                              ? 'fill-gold text-gold' 
+                              : 'text-muted'} 
+                          />
                         ))}
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">{productData.reviews} reviews</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {reviewStats?.totalReviews || productData.reviews || 0} reviews
+                      </p>
                     </div>
+                    
+                    <button
+                      onClick={() => setShowReviewForm(!showReviewForm)}
+                      className="px-6 py-2 bg-primary text-primary-foreground rounded-sm font-body text-sm hover:bg-primary/90 transition-colors"
+                    >
+                      {showReviewForm ? 'Cancel' : 'Write a Review'}
+                    </button>
                   </div>
 
-                  {/* Sample Review */}
-                  <div className="border-b border-border pb-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={14} className="fill-gold text-gold" />
-                        ))}
+                  {/* Write Review Form */}
+                  {showReviewForm && (
+                    <form onSubmit={handleReviewSubmit} className="bg-cream-dark p-6 rounded-lg mb-6">
+                      <h3 className="font-display text-xl mb-4">Write Your Review</h3>
+                      
+                      <div className="space-y-4">
+                        {/* Rating */}
+                        <div>
+                          <label className="block font-body text-sm font-medium mb-2">
+                            Rating <span className="text-primary">*</span>
+                          </label>
+                          <div className="flex gap-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                                className="transition-transform hover:scale-110"
+                              >
+                                <Star
+                                  size={32}
+                                  className={star <= reviewForm.rating 
+                                    ? 'fill-gold text-gold' 
+                                    : 'text-muted hover:text-gold'}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Name */}
+                        {!user && (
+                          <div>
+                            <label className="block font-body text-sm font-medium mb-2">
+                              Name <span className="text-primary">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={reviewForm.name}
+                              onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })}
+                              className="w-full px-4 py-2 border border-border rounded-sm font-body focus:outline-none focus:border-primary"
+                              placeholder="Your name"
+                              required
+                            />
+                          </div>
+                        )}
+
+                        {/* Email */}
+                        {!user && (
+                          <div>
+                            <label className="block font-body text-sm font-medium mb-2">
+                              Email (optional)
+                            </label>
+                            <input
+                              type="email"
+                              value={reviewForm.email}
+                              onChange={(e) => setReviewForm({ ...reviewForm, email: e.target.value })}
+                              className="w-full px-4 py-2 border border-border rounded-sm font-body focus:outline-none focus:border-primary"
+                              placeholder="your@email.com"
+                            />
+                          </div>
+                        )}
+
+                        {/* Comment */}
+                        <div>
+                          <label className="block font-body text-sm font-medium mb-2">
+                            Your Review <span className="text-primary">*</span>
+                          </label>
+                          <textarea
+                            value={reviewForm.comment}
+                            onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-sm font-body focus:outline-none focus:border-primary min-h-[120px]"
+                            placeholder="Share your experience with this product..."
+                            required
+                            maxLength={1000}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {reviewForm.comment.length}/1000 characters
+                          </p>
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                          type="submit"
+                          disabled={submittingReview}
+                          className="w-full bg-primary text-primary-foreground py-3 rounded-sm font-body text-sm uppercase tracking-wider hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {submittingReview ? 'Submitting...' : 'Submit Review'}
+                        </button>
                       </div>
-                      <span className="font-body text-sm font-medium">Priya Sharma</span>
-                    </div>
-                    <p className="font-body text-sm text-muted-foreground mb-2">Verified Purchase</p>
-                    <p className="font-body text-foreground">
-                      Absolutely stunning saree! The quality exceeded my expectations. The embroidery work is beautiful
-                      and the fabric is luxurious. Received many compliments at the wedding.
-                    </p>
+                    </form>
+                  )}
+
+                  {/* Reviews List */}
+                  <div className="space-y-4">
+                    {reviews.length > 0 ? (
+                      reviews.map((review) => (
+                        <div key={review._id} className="border-b border-border pb-6 last:border-0">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star 
+                                    key={i} 
+                                    size={14} 
+                                    className={i < review.rating ? 'fill-gold text-gold' : 'text-muted'} 
+                                  />
+                                ))}
+                              </div>
+                              <span className="font-body text-sm font-medium">{review.name}</span>
+                              {review.isVerifiedPurchase && (
+                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                                  Verified Purchase
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-body text-xs text-muted-foreground">
+                              {formatDate(review.createdAt)}
+                            </span>
+                          </div>
+                          <p className="font-body text-foreground">{review.comment}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="font-body text-muted-foreground">No reviews yet. Be the first to review this product!</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -4,11 +4,13 @@ import { Heart, Trash2, ShoppingBag } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { wishlistAPI } from '@/services/api';
+import { useCart } from '@/context/CartContext';
 import { toast } from 'sonner';
 
 const Wishlist = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -57,6 +59,31 @@ const Wishlist = () => {
     } catch (error) {
       console.error('Error removing from wishlist:', error);
       toast.error('Failed to remove from wishlist');
+    }
+  };
+
+  const handleAddToCart = async (item) => {
+    try {
+      const cartItem = {
+        _id: item._id,
+        name: item.name,
+        price: item.price,
+        image: item.images?.[0] || '/placeholder-product.jpg',
+        images: item.images,
+        quantity: 1,
+        size: item.sizes?.[0] || null,
+        color: item.colors?.[0] || null,
+      };
+      
+      const result = await addToCart(cartItem);
+      if (result.success) {
+        toast.success(`${item.name} added to cart`);
+      } else {
+        toast.error('Failed to add to cart');
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add to cart');
     }
   };
 
@@ -184,13 +211,13 @@ const Wishlist = () => {
 
                   {/* Add to Cart Button */}
                   {item.inStock ? (
-                    <Link
-                      to="/cart"
+                    <button
+                      onClick={() => handleAddToCart(item)}
                       className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-2 px-4 font-body text-xs uppercase tracking-wider hover:bg-primary/90 transition-all rounded-sm"
                     >
                       <ShoppingBag size={14} />
                       Add to Cart
-                    </Link>
+                    </button>
                   ) : (
                     <button
                       disabled
