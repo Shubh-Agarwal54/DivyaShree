@@ -21,7 +21,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="font-display text-2xl text-foreground mb-4">Agreement to Terms</h2>
               <p className="leading-relaxed">
-                By accessing or using Divya Shree's website and services, you agree to be bound by these Terms of Service. 
+                By accessing or using Shree Divya's website and services, you agree to be bound by these Terms of Service. 
                 If you do not agree to these terms, please do not use our services.
               </p>
             </section>
@@ -62,14 +62,14 @@ const TermsOfService = () => {
               <h2 className="font-display text-2xl text-foreground mb-4">Intellectual Property</h2>
               <p className="leading-relaxed">
                 All content on this website, including text, graphics, logos, images, and software, is the property 
-                of Divya Shree and protected by copyright and trademark laws. Unauthorized use is prohibited.
+                of Shree Divya and protected by copyright and trademark laws. Unauthorized use is prohibited.
               </p>
             </section>
 
             <section>
               <h2 className="font-display text-2xl text-foreground mb-4">Limitation of Liability</h2>
               <p className="leading-relaxed">
-                Divya Shree shall not be liable for any indirect, incidental, special, or consequential damages arising 
+                Shree Divya shall not be liable for any indirect, incidental, special, or consequential damages arising 
                 from your use of our website or products. Our total liability is limited to the amount you paid for the product.
               </p>
             </section>

@@ -1,6 +1,6 @@
 const WhatsAppButton = () => {
   const whatsappNumber = "+918979893427";
-  const whatsappMessage = "Hi, I need help with Divya Shree products.";
+  const whatsappMessage = "Hi, I need help with Shree Divya products.";
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (

@@ -21,7 +21,7 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="font-display text-2xl text-foreground mb-4">Introduction</h2>
               <p className="leading-relaxed">
-                At Divya Shree, we are committed to protecting your privacy. This Privacy Policy explains how we collect, 
+                At Shree Divya, we are committed to protecting your privacy. This Privacy Policy explains how we collect, 
                 use, disclose, and safeguard your information when you visit our website or make a purchase from us.
               </p>
             </section>

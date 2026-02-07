@@ -39,7 +39,7 @@ const Footer = () => {
           {/* Brand column */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1 mb-6 lg:mb-0">
             <h3 className="font-display text-2xl mb-4">
-              <span className="text-gold">✦</span> Divya Shree <span className="text-gold">✦</span>
+              <span className="text-gold">✦</span>  Shree Divya <span className="text-gold">✦</span>
             </h3>
             <p className="font-body text-sm text-primary-foreground/80 mb-6">
               Celebrating the beauty of Indian tradition with contemporary elegance. Your destination for exquisite ethnic wear.
@@ -156,7 +156,7 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="font-body text-xs text-primary-foreground/60 text-center md:text-left">
-              © 2026 Divya Shree. All rights reserved.
+              © 2026 Shree Divya. All rights reserved.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link to="/policies/privacy" className="font-body text-xs text-primary-foreground/60 hover:text-gold transition-colors">Privacy Policy</Link>

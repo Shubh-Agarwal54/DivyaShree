@@ -62,7 +62,7 @@ const Navbar = () => {
             <div className="absolute left-1/2 -translate-x-1/2 lg:relative lg:left-auto lg:translate-x-0 lg:flex-none text-center logo-container">
               <Link to="/" className="inline-block">
                 <h1 className="font-display text-2xl md:text-3xl text-primary tracking-wide nav-logo">
-                  <span className="text-gold">✦</span> Divya Shree <span className="text-gold">✦</span>
+                  <span className="text-gold">✦</span> Shree Divya <span className="text-gold">✦</span>
                 </h1>
               </Link>
             </div>

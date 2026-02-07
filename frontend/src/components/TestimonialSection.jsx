@@ -42,7 +42,7 @@ const TestimonialSection = () => {
     <section className="py-12 md:py-16 bg-background">
       <div className="container mx-auto px-4">
         <div ref={titleRef}>
-          <p className="section-subtitle mb-2">DIVYA SHREE CUSTOMERS TELL IT LIKE IT IS</p>
+          <p className="section-subtitle mb-2"> SHREE DIVYA CUSTOMERS TELL IT LIKE IT IS</p>
           <h2 className="section-title mb-10">What Our Customers Say</h2>
         </div>
         
