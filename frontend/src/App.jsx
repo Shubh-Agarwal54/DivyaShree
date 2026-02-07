@@ -42,6 +42,8 @@ import Products from "./admin/pages/Products";
 import ProductForm from "./admin/pages/ProductForm";
 import Analytics from "./admin/pages/Analytics";
 import Settings from "./admin/pages/Settings";
+import InventoryManagement from "./admin/pages/InventoryManagement";
+import RolePermissions from "./admin/pages/RolePermissions";
 // Shop Pages
 import Sarees from "./pages/shop/Sarees";
 import Lehengas from "./pages/shop/Lehengas";
@@ -173,6 +175,8 @@ const App = () => (
               <Route path="products" element={<Products />} />
               <Route path="products/new" element={<ProductForm />} />
               <Route path="products/:id/edit" element={<ProductForm />} />
+              <Route path="inventory" element={<InventoryManagement />} />
+              <Route path="role-permissions" element={<RolePermissions />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="settings" element={<Settings />} />
             </Route>

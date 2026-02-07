@@ -8,7 +8,7 @@ const auditLogSchema = new mongoose.Schema({
   },
   adminEmail: {
     type: String,
-    required: true,
+    required: false, // Made optional since we fetch it in the service
   },
   action: {
     type: String,
@@ -18,20 +18,18 @@ const auditLogSchema = new mongoose.Schema({
       'ORDER_CREATED', 'ORDER_UPDATED', 'ORDER_STATUS_CHANGED', 'ORDER_CANCELLED', 'ORDER_DELETED',
       'PRODUCT_CREATED', 'PRODUCT_UPDATED', 'PRODUCT_DELETED', 'PRODUCT_STOCK_UPDATED',
       'SETTINGS_UPDATED', 'ADMIN_CREATED', 'ADMIN_UPDATED', 'ADMIN_DELETED',
+      'UPDATE_STOCK', 'UPDATE', 'CREATE', 'DELETE', 'UPDATE_ROLE', // New generic actions
     ],
   },
   resource: {
     type: String,
     required: true,
-    enum: ['users', 'orders', 'products', 'settings', 'admins'],
+    enum: ['users', 'orders', 'products', 'settings', 'admins', 'Product', 'RolePermission', 'User'],
   },
   resourceId: {
     type: mongoose.Schema.Types.ObjectId,
   },
-  changes: {
-    before: mongoose.Schema.Types.Mixed,
-    after: mongoose.Schema.Types.Mixed,
-  },
+  changes: mongoose.Schema.Types.Mixed, // Flexible structure for any type of changes
   ipAddress: String,
   userAgent: String,
   timestamp: {

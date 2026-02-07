@@ -6,6 +6,18 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Product name is required'],
     trim: true,
   },
+  sku: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true,
+  },
+  barcode: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true,
+  },
   price: {
     type: Number,
     required: [true, 'Price is required'],

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -13,18 +13,83 @@ import {
   X,
   Bell,
   UserCircle,
+  Warehouse,
+  Shield,
 } from 'lucide-react';
+import api from '@/services/axios';
 
 const AdminLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { user, logout } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [permissions, setPermissions] = useState(null);
+  const { user, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Redirect if not admin
-  if (!user || user.role !== 'admin') {
-    navigate('/login');
+  useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) {
+      console.log('AdminLayout - Waiting for auth to load...');
+      return;
+    }
+
+    // Check if user is admin
+    console.log('AdminLayout - User:', user);
+    console.log('AdminLayout - User Role:', user?.role);
+    
+    if (!user) {
+      console.log('AdminLayout - No user found, redirecting to login');
+      navigate('/login');
+      return;
+    }
+    
+    if (!['admin', 'subadmin', 'masteradmin', 'superadmin'].includes(user.role)) {
+      console.log('AdminLayout - User role not authorized:', user.role);
+      navigate('/login');
+      return;
+    }
+    
+    console.log('AdminLayout - User authorized, fetching permissions');
+    fetchPermissions();
+  }, [user, navigate, authLoading]);
+
+  const fetchPermissions = async () => {
+    try {
+      console.log('Fetching permissions from /admin/permissions/my');
+      const response = await api.get('/admin/permissions/my');
+      console.log('Permissions response:', response.data);
+      setPermissions(response.data.data.permissions);
+    } catch (error) {
+      console.error('Failed to fetch permissions:', error);
+      console.error('Error response:', error.response?.data);
+    }
+  };
+
+  // Show loading while auth is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B1E1E] mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-body">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading while permissions are being fetched
+  if (!user || !['admin', 'subadmin', 'masteradmin', 'superadmin'].includes(user.role)) {
     return null;
+  }
+
+  if (!permissions) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#6B1E1E] mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-body">Loading permissions...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleLogout = () => {
@@ -32,14 +97,61 @@ const AdminLayout = () => {
     navigate('/login');
   };
 
+  const canAccess = (resource, action = 'view') => {
+    if (!permissions) return false;
+    return permissions[resource]?.[action] === true;
+  };
+
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: Users, label: 'Users', path: '/admin/users' },
-    { icon: ShoppingBag, label: 'Orders', path: '/admin/orders' },
-    { icon: Package, label: 'Products', path: '/admin/products' },
-    { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
-    { icon: Settings, label: 'Settings', path: '/admin/settings' },
-  ];
+    { 
+      icon: LayoutDashboard, 
+      label: 'Dashboard', 
+      path: '/admin/dashboard',
+      show: canAccess('dashboard', 'view')
+    },
+    { 
+      icon: Users, 
+      label: 'Users', 
+      path: '/admin/users',
+      show: canAccess('users', 'view')
+    },
+    { 
+      icon: ShoppingBag, 
+      label: 'Orders', 
+      path: '/admin/orders',
+      show: canAccess('orders', 'view')
+    },
+    { 
+      icon: Package, 
+      label: 'Products', 
+      path: '/admin/products',
+      show: canAccess('products', 'view')
+    },
+    { 
+      icon: Warehouse, 
+      label: 'Inventory', 
+      path: '/admin/inventory',
+      show: canAccess('inventory', 'view')
+    },
+    { 
+      icon: BarChart3, 
+      label: 'Analytics', 
+      path: '/admin/analytics',
+      show: canAccess('analytics', 'view')
+    },
+    { 
+      icon: Shield, 
+      label: 'Role Permissions', 
+      path: '/admin/role-permissions',
+      show: canAccess('rolePermissions', 'view')
+    },
+    { 
+      icon: Settings, 
+      label: 'Settings', 
+      path: '/admin/settings',
+      show: canAccess('settings', 'view')
+    },
+  ].filter(item => item.show);
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
@@ -48,7 +160,7 @@ const AdminLayout = () => {
       {/* Sidebar */}
       <aside
         className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
+          sidebarOpen ? 'w-50' : 'w-15'
         } bg-gradient-to-b from-[#6B1E1E] to-[#8B2E2E] text-white transition-all duration-300 flex flex-col`}
       >
         {/* Logo & Toggle */}
@@ -57,7 +169,7 @@ const AdminLayout = () => {
             <>
               <div className="flex items-center gap-2">
                 <span className="text-[#D4AF37] text-2xl">✦</span>
-                <h1 className="font-display text-xl font-bold">DivyaShree</h1>
+                <h1 className="font-display text-xl font-bold">Shree Divya</h1>
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}

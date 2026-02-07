@@ -1,7 +1,36 @@
 const AuditLog = require('./admin-audit.model');
 
 class AdminAuditService {
-  // Log admin action
+  // Log admin action (simplified interface)
+  async log(options) {
+    try {
+      const { userId, action, resource, resourceId, changes, ipAddress, userAgent } = options;
+      
+      // Get user email if not provided
+      let adminEmail = options.adminEmail;
+      if (!adminEmail && userId) {
+        const User = require('../user/user.model');
+        const user = await User.findById(userId).select('email');
+        adminEmail = user?.email;
+      }
+      
+      return await this.logAction(
+        userId,
+        adminEmail,
+        action,
+        resource,
+        resourceId,
+        changes,
+        ipAddress,
+        userAgent
+      );
+    } catch (error) {
+      console.error('Failed to log admin action:', error);
+      // Don't throw error - logging failure shouldn't break the operation
+    }
+  }
+
+  // Log admin action (full interface)
   async logAction(adminId, adminEmail, action, resource, resourceId, changes, ipAddress, userAgent) {
     try {
       const log = new AuditLog({

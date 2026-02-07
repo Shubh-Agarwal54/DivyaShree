@@ -1,4 +1,11 @@
+import { useLocation } from 'react-router-dom';
+
 const WhatsAppButton = () => {
+  const location = useLocation();
+  const pathname = (location && location.pathname) || (typeof window !== 'undefined' ? window.location.pathname : '');
+
+  // Hide WhatsApp button on admin routes
+  if (pathname.startsWith('/admin')) return null;
   const whatsappNumber = "+918979893427";
   const whatsappMessage = "Hi, I need help with Shree Divya products.";
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
