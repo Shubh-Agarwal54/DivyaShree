@@ -91,8 +91,8 @@ const PrivacyPolicy = () => {
               <h2 className="font-display text-2xl text-foreground mb-4">Contact Us</h2>
               <p className="leading-relaxed">
                 If you have questions about this Privacy Policy, please contact us at:<br />
-                Email: privacy@divyashree.com<br />
-                Phone: +91 98765 43210
+                Email: divyashreefashion2025@gmail.com<br />
+                Phone: +91 89798 93427
               </p>
             </section>
           </div>

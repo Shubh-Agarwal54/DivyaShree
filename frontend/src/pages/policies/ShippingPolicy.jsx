@@ -152,9 +152,9 @@ const ShippingPolicy = () => {
               <h2 className="font-display text-2xl text-foreground mb-4">Contact for Shipping Queries</h2>
               <p className="leading-relaxed">
                 For shipping-related questions, contact us at:<br />
-                Email: shipping@divyashree.com<br />
-                Phone: +91 98765 43210<br />
-                WhatsApp: +91 98765 43210
+                Email: divyashreefashion2025@gmail.com<br />
+                Phone: +91 89798 93427<br />
+                WhatsApp: +91 89798 93427
               </p>
             </section>
           </div>

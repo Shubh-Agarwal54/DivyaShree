@@ -3,8 +3,8 @@ import { Save, Mail, Bell, Shield, Database } from 'lucide-react';
 
 const Settings = () => {
   const [settings, setSettings] = useState({
-    siteName: 'DivyaShree',
-    supportEmail: 'support@divyashree.com',
+    siteName: 'Shree Diya',
+    supportEmail: 'divyashreefashion2025@gmail.com',
     orderNotifications: true,
     userNotifications: true,
     inventoryAlerts: true,

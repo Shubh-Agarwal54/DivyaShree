@@ -7,7 +7,10 @@ import './InventoryManagement.css';
 const InventoryManagement = () => {
   const [inventory, setInventory] = useState([]);
   const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
+  // Local controlled search term to debounce requests and avoid refreshing on every keystroke
+  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     search: '',
     category: 'all',
@@ -27,9 +30,19 @@ const InventoryManagement = () => {
     fetchInventory();
   }, [filters]);
 
+  // Debounce syncing of searchTerm -> filters.search to avoid immediate fetch on each keystroke
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setFilters((prev) => ({ ...prev, search: searchTerm }));
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
   const fetchInventory = async () => {
     try {
-      setLoading(true);
+      // show table-level loading for subsequent fetches; keep initial full-page loader only for first load
+      setTableLoading(true);
       const params = new URLSearchParams();
       if (filters.search) params.append('search', filters.search);
       if (filters.category !== 'all') params.append('category', filters.category);
@@ -41,7 +54,8 @@ const InventoryManagement = () => {
     } catch (error) {
       console.error('Failed to fetch inventory:', error);
     } finally {
-      setLoading(false);
+      setTableLoading(false);
+      if (initialLoading) setInitialLoading(false);
     }
   };
 
@@ -72,7 +86,7 @@ const InventoryManagement = () => {
     return 'In Stock';
   };
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="inventory-loading-container">
         <div className="inventory-spinner"></div>
@@ -149,8 +163,11 @@ const InventoryManagement = () => {
             type="text"
             placeholder="Search products..."
             className="inventory-search-input"
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.preventDefault();
+            }}
           />
         </div>
 
@@ -258,6 +275,12 @@ const InventoryManagement = () => {
             ))}
           </tbody>
         </table>
+
+        {tableLoading && (
+          <div className="inventory-table-loading-overlay">
+            <div className="inventory-spinner"></div>
+          </div>
+        )}
 
         {inventory.length === 0 && (
           <div className="inventory-empty-state">

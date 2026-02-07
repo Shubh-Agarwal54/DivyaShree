@@ -104,8 +104,8 @@ const RefundPolicy = () => {
               <h2 className="font-display text-2xl text-foreground mb-4">Contact for Refunds</h2>
               <p className="leading-relaxed">
                 For refund-related queries, contact us at:<br />
-                Email: refunds@divyashree.com<br />
-                Phone: +91 98765 43210<br />
+                Email: divyashreefashion2025@gmail.com<br />
+                Phone: +91 89798 93427<br />
                 Available: Mon-Sat, 10 AM - 7 PM
               </p>
             </section>
