@@ -37,6 +37,7 @@ router.get('/orders/:orderId', checkPermission('orders', 'view'), adminOrderCont
 router.put('/orders/:orderId', checkPermission('orders', 'edit'), adminOrderController.updateOrder);
 router.patch('/orders/:orderId/status', checkPermission('orders', 'updateStatus'), adminOrderController.updateOrderStatus);
 router.patch('/orders/:orderId/cancel', checkPermission('orders', 'cancel'), adminOrderController.cancelOrder);
+router.patch('/orders/:orderId/return-exchange', checkPermission('orders', 'edit'), adminOrderController.processReturnExchange);
 router.delete('/orders/:orderId', checkPermission('orders', 'delete'), adminOrderController.deleteOrder);
 
 // Product Management Routes

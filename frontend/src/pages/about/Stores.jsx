@@ -12,7 +12,7 @@ const Stores = () => {
       address: 'Sanjay Place, Near Taj Mahal, Agra, Uttar Pradesh 282003',
       phone: '+91 89798 93427',
       hours: 'Mon-Sun: 10:00 AM - 10:00 PM',
-      mapLink: '#',
+      mapLink: 'https://www.google.co.in/maps/place/Sanjay+Place,+Civil+Lines,+Agra,+Uttar+Pradesh/@27.2015824,78.0006051,16z/data=!3m1!4b1!4m6!3m5!1s0x3974773a00ed6eb5:0x2ac3f668f57db04b!8m2!3d27.1986569!4d78.0059814!16s%2Fm%2F04cytln?entry=ttu&g_ep=EgoyMDI2MDIwNC4wIKXMDSoASAFQAw%3D%3D',
     },
     // {
     //   city: 'Delhi',

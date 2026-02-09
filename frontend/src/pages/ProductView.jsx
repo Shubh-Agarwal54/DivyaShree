@@ -533,7 +533,7 @@ const ProductView = () => {
                 </div>
                 <div className="flex items-center gap-3 font-body text-sm">
                   <RefreshCw size={20} className="text-primary" />
-                  <span>Easy 7-day return & exchange</span>
+                  <span>Easy 1-day return & exchange</span>
                 </div>
                 <div className="flex items-center gap-3 font-body text-sm">
                   <Shield size={20} className="text-primary" />

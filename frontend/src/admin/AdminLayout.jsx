@@ -21,6 +21,7 @@ import api from '@/services/axios';
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [permissions, setPermissions] = useState(null);
+  const [pendingRequests, setPendingRequests] = useState(0);
   const { user, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,6 +64,28 @@ const AdminLayout = () => {
       console.error('Error response:', error.response?.data);
     }
   };
+
+  const fetchPendingRequests = async () => {
+    try {
+      const response = await api.get('/admin/orders');
+      const orders = response.data.data?.orders || [];
+      const pending = orders.filter(
+        order => order.returnExchange?.status === 'requested'
+      ).length;
+      setPendingRequests(pending);
+    } catch (error) {
+      console.error('Failed to fetch pending requests:', error);
+    }
+  };
+
+  // Poll for pending requests every 30 seconds
+  useEffect(() => {
+    if (permissions && canAccess('orders', 'view')) {
+      fetchPendingRequests();
+      const interval = setInterval(fetchPendingRequests, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [permissions]);
 
   // Show loading while auth is loading
   if (authLoading) {
@@ -238,9 +261,19 @@ const AdminLayout = () => {
             <p className="font-body text-sm text-gray-600">Manage your e-commerce platform</p>
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative p-2 hover:bg-gray-100 rounded-lg">
+            <button 
+              onClick={() => navigate('/admin/orders')}
+              className="relative p-2 hover:bg-gray-100 rounded-lg group"
+            >
               <Bell size={20} className="text-gray-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              {pendingRequests > 0 && (
+                <>
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold animate-pulse">
+                    {pendingRequests}
+                  </span>
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                </>
+              )}
             </button>
           </div>
         </header>

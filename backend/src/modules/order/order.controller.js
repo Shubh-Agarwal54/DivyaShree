@@ -118,8 +118,9 @@ class OrderController {
   async cancelOrder(req, res) {
     try {
       const { orderId } = req.params;
+      const { reason } = req.body;
 
-      const result = await orderService.cancelOrder(orderId, req.userId);
+      const result = await orderService.cancelOrder(orderId, req.userId, reason);
 
       res.status(200).json(result);
     } catch (error) {
@@ -133,6 +134,45 @@ class OrderController {
       res.status(500).json({
         success: false,
         message: 'Failed to cancel order',
+        error: error.message,
+      });
+    }
+  }
+
+  // Request return or exchange
+  async requestReturnExchange(req, res) {
+    try {
+      const { orderId } = req.params;
+      const { type, reason } = req.body;
+
+      if (!type || !['return', 'exchange'].includes(type)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid type. Must be "return" or "exchange"',
+        });
+      }
+
+      if (!reason || reason.trim() === '') {
+        return res.status(400).json({
+          success: false,
+          message: 'Reason is required',
+        });
+      }
+
+      const result = await orderService.requestReturnExchange(orderId, req.userId, type, reason);
+
+      res.status(200).json(result);
+    } catch (error) {
+      if (error.message.includes('not found') || error.message.includes('can only') || error.message.includes('already exists') || error.message.includes('expired')) {
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        message: 'Failed to request return/exchange',
         error: error.message,
       });
     }
@@ -165,7 +205,7 @@ class OrderController {
         });
       }
 
-      const result = await orderService.updateOrderStatus(orderId, status);
+      const result = await orderService.updateOrderStatus(orderId, status, req.userId);
 
       res.status(200).json(result);
     } catch (error) {
@@ -179,6 +219,38 @@ class OrderController {
       res.status(500).json({
         success: false,
         message: 'Failed to update order status',
+        error: error.message,
+      });
+    }
+  }
+
+  // Admin: Process return/exchange request
+  async processReturnExchange(req, res) {
+    try {
+      const { orderId } = req.params;
+      const { action, adminNotes } = req.body;
+
+      if (!action || !['approved', 'rejected'].includes(action)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid action. Must be "approved" or "rejected"',
+        });
+      }
+
+      const result = await orderService.processReturnExchange(orderId, action, req.userId, adminNotes);
+
+      res.status(200).json(result);
+    } catch (error) {
+      if (error.message.includes('not found') || error.message.includes('No return') || error.message.includes('already been processed')) {
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        message: 'Failed to process return/exchange request',
         error: error.message,
       });
     }

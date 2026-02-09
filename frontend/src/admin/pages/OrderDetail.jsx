@@ -10,6 +10,9 @@ const OrderDetail = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState('');
+  const [showReturnExchangeModal, setShowReturnExchangeModal] = useState(false);
+  const [adminNotes, setAdminNotes] = useState('');
+  const [processingAction, setProcessingAction] = useState(null);
 
   useEffect(() => {
     fetchOrderDetails();
@@ -55,6 +58,24 @@ const OrderDetail = () => {
       } catch (err) {
         alert('Failed to cancel order');
       }
+    }
+  };
+
+  const handleProcessReturnExchange = async (action) => {
+    try {
+      setProcessingAction(action);
+      await api.patch(`/admin/orders/${id}/return-exchange`, {
+        action,
+        adminNotes
+      });
+      await fetchOrderDetails();
+      setShowReturnExchangeModal(false);
+      setAdminNotes('');
+      alert(`Return/Exchange request ${action} successfully`);
+    } catch (err) {
+      alert(`Failed to ${action} return/exchange request`);
+    } finally {
+      setProcessingAction(null);
     }
   };
 
@@ -205,6 +226,69 @@ const OrderDetail = () => {
               </div>
             </div>
           )}
+
+          {/* Return/Exchange Request */}
+          {order.returnExchange && order.returnExchange.status && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-lg font-semibold">
+                  {order.returnExchange.type === 'return' ? 'Return' : 'Exchange'} Request
+                </h3>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  order.returnExchange.status === 'approved' ? 'bg-green-100 text-green-800' :
+                  order.returnExchange.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                  order.returnExchange.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                  'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {order.returnExchange.status.charAt(0).toUpperCase() + order.returnExchange.status.slice(1)}
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <p className="font-body text-xs text-gray-600">Request Type</p>
+                  <p className="font-body text-sm font-medium text-gray-900 capitalize">
+                    {order.returnExchange.type}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-body text-xs text-gray-600">Customer Reason</p>
+                  <p className="font-body text-sm text-gray-900">{order.returnExchange.reason}</p>
+                </div>
+                <div>
+                  <p className="font-body text-xs text-gray-600">Requested On</p>
+                  <p className="font-body text-sm text-gray-900">
+                    {new Date(order.returnExchange.requestedAt).toLocaleDateString()} at{' '}
+                    {new Date(order.returnExchange.requestedAt).toLocaleTimeString()}
+                  </p>
+                </div>
+                {order.returnExchange.processedAt && (
+                  <div>
+                    <p className="font-body text-xs text-gray-600">Processed On</p>
+                    <p className="font-body text-sm text-gray-900">
+                      {new Date(order.returnExchange.processedAt).toLocaleDateString()} at{' '}
+                      {new Date(order.returnExchange.processedAt).toLocaleTimeString()}
+                    </p>
+                  </div>
+                )}
+                {order.returnExchange.adminNotes && (
+                  <div>
+                    <p className="font-body text-xs text-gray-600">Admin Notes</p>
+                    <p className="font-body text-sm text-gray-900">{order.returnExchange.adminNotes}</p>
+                  </div>
+                )}
+
+                {order.returnExchange.status === 'requested' && (
+                  <button
+                    onClick={() => setShowReturnExchangeModal(true)}
+                    className="w-full mt-4 px-4 py-2 bg-[#6B1E1E] text-white rounded-lg hover:bg-[#8B2E2E] transition-colors"
+                  >
+                    Review Request
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -301,7 +385,81 @@ const OrderDetail = () => {
           </div>
         </div>
       </div>
-    </div>
+      {/* Return/Exchange Review Modal */}
+      {showReturnExchangeModal && order.returnExchange && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="font-display text-2xl font-bold text-gray-900">
+                Review {order.returnExchange.type === 'return' ? 'Return' : 'Exchange'} Request
+              </h2>
+              <button 
+                onClick={() => setShowReturnExchangeModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <p className="font-body text-sm text-gray-600 mb-1">Order Number</p>
+                <p className="font-body text-base font-medium text-gray-900">#{order.orderNumber}</p>
+              </div>
+
+              <div>
+                <p className="font-body text-sm text-gray-600 mb-1">Request Type</p>
+                <p className="font-body text-base font-medium text-gray-900 capitalize">
+                  {order.returnExchange.type}
+                </p>
+              </div>
+
+              <div>
+                <p className="font-body text-sm text-gray-600 mb-1">Customer Reason</p>
+                <p className="font-body text-base text-gray-900">{order.returnExchange.reason}</p>
+              </div>
+
+              <div>
+                <p className="font-body text-sm text-gray-600 mb-1">Requested On</p>
+                <p className="font-body text-base text-gray-900">
+                  {new Date(order.returnExchange.requestedAt).toLocaleDateString()} at{' '}
+                  {new Date(order.returnExchange.requestedAt).toLocaleTimeString()}
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-body text-sm font-medium text-gray-900 mb-2">
+                  Admin Notes (Optional)
+                </label>
+                <textarea
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg font-body text-sm focus:outline-none focus:border-[#6B1E1E] transition-colors resize-none"
+                  rows="4"
+                  placeholder="Add notes about your decision..."
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => handleProcessReturnExchange('rejected')}
+                  disabled={processingAction !== null}
+                  className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {processingAction === 'rejected' ? 'Rejecting...' : 'Reject'}
+                </button>
+                <button
+                  onClick={() => handleProcessReturnExchange('approved')}
+                  disabled={processingAction !== null}
+                  className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {processingAction === 'approved' ? 'Approving...' : 'Approve'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}    </div>
   );
 };
 

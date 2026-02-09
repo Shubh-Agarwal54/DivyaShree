@@ -25,7 +25,7 @@ const OurStory = () => {
           <div className="bg-card p-8 md:p-12 rounded-lg shadow-card border border-border mb-12">
             <div className="prose max-w-none">
               <p className="font-body text-muted-foreground text-lg leading-relaxed mb-6">
-                Shree Divya began in 2010 with a simple vision: to celebrate the rich heritage of Indian ethnic wear 
+                Shree Divya began in 2025 with a simple vision: to celebrate the rich heritage of Indian ethnic wear 
                 while embracing contemporary aesthetics. What started as a small boutique in Agra has grown into a 
                 beloved destination for women seeking authentic, high-quality traditional attire.
               </p>

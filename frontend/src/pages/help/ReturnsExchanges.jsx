@@ -19,8 +19,8 @@ const ReturnsExchanges = () => {
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             <div className="bg-card p-6 rounded-lg border border-border text-center">
               <Clock className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-display text-lg mb-2">7 Days Return</h3>
-              <p className="font-body text-sm text-muted-foreground">Return within 7 days of delivery</p>
+              <h3 className="font-display text-lg mb-2">1 Days Return</h3>
+              <p className="font-body text-sm text-muted-foreground">Return within 1 day of delivery</p>
             </div>
             <div className="bg-card p-6 rounded-lg border border-border text-center">
               <RefreshCw className="w-12 h-12 text-primary mx-auto mb-4" />
@@ -38,7 +38,7 @@ const ReturnsExchanges = () => {
             <div>
               <h2 className="font-display text-2xl text-foreground mb-4">Return Policy</h2>
               <div className="space-y-4 font-body text-muted-foreground">
-                <p>• Products can be returned within 7 days of delivery</p>
+                <p>• Products can be returned within 1 day of delivery</p>
                 <p>• Items must be unused, unwashed, and in original condition with all tags attached</p>
                 <p>• Custom or personalized items cannot be returned</p>
                 <p>• Sale items are eligible for exchange only, not returns</p>

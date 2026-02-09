@@ -22,7 +22,7 @@ const RefundPolicy = () => {
               <h2 className="font-display text-2xl text-foreground mb-4">Refund Eligibility</h2>
               <p className="leading-relaxed mb-3">Refunds are available under the following conditions:</p>
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>Product returned within 7 days of delivery</li>
+                <li>Product returned within 1 day of delivery</li>
                 <li>Item is unused, unwashed, and in original condition</li>
                 <li>All original tags and packaging are intact</li>
                 <li>Invoice or proof of purchase is provided</li>

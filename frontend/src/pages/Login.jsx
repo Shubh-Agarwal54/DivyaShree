@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -12,6 +12,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, user } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
 
   // Scroll to top when component mounts
@@ -19,12 +20,13 @@ const Login = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (respect optional `from` state)
   useEffect(() => {
     if (user) {
-      navigate('/account');
+      const redirectTo = location.state?.from || '/account';
+      navigate(redirectTo);
     }
-  }, [user, navigate]);
+  }, [user, navigate, location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,7 +36,8 @@ const Login = () => {
     try {
       const result = await login(email, password);
       if (result.success) {
-        navigate('/account');
+        const redirectTo = location.state?.from || '/account';
+        navigate(redirectTo);
       } else if (result.requiresVerification) {
         // Redirect to OTP verification if email not verified
         navigate('/verify-otp', {

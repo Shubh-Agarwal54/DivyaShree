@@ -75,6 +75,35 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'confirmed',
   },
+  deliveredAt: {
+    type: Date,
+  },
+  cancellation: {
+    reason: String,
+    cancelledAt: Date,
+    cancelledBy: {
+      type: String,
+      enum: ['user', 'admin'],
+    },
+  },
+  returnExchange: {
+    type: {
+      type: String,
+      enum: ['return', 'exchange'],
+    },
+    reason: String,
+    status: {
+      type: String,
+      enum: ['requested', 'approved', 'rejected', 'completed'],
+    },
+    requestedAt: Date,
+    processedAt: Date,
+    processedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    adminNotes: String,
+  },
 }, {
   timestamps: true,
 });

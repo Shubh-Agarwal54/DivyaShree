@@ -286,10 +286,21 @@ export const orderAPI = {
   },
 
   // Cancel order
-  cancelOrder: async (orderId) => {
+  cancelOrder: async (orderId, reason = '') => {
     const response = await fetch(`${API_BASE_URL}/orders/${orderId}/cancel`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
+      body: JSON.stringify({ reason }),
+    });
+    return response.json();
+  },
+
+  // Request return or exchange
+  requestReturnExchange: async (orderId, type, reason) => {
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/return-exchange`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ type, reason }),
     });
     return response.json();
   },

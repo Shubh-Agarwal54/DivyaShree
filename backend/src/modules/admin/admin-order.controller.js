@@ -396,6 +396,89 @@ class AdminOrderController {
       });
     }
   }
+
+  // Process return/exchange request (approve or reject)
+  async processReturnExchange(req, res) {
+    try {
+      const { orderId } = req.params;
+      const { action, adminNotes } = req.body;
+
+      if (!['approved', 'rejected'].includes(action)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid action. Must be "approved" or "rejected"',
+        });
+      }
+
+      const order = await Order.findById(orderId);
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order not found',
+        });
+      }
+
+      if (!order.returnExchange || !order.returnExchange.status) {
+        return res.status(400).json({
+          success: false,
+          message: 'No return/exchange request found for this order',
+        });
+      }
+
+      if (order.returnExchange.status !== 'requested') {
+        return res.status(400).json({
+          success: false,
+          message: 'This request has already been processed',
+        });
+      }
+
+      order.returnExchange.status = action;
+      order.returnExchange.processedAt = new Date();
+      order.returnExchange.processedBy = req.user._id;
+      if (adminNotes) {
+        order.returnExchange.adminNotes = adminNotes;
+      }
+
+      await order.save();
+
+      // Log audit trail
+      await adminAuditService.log({
+        action: 'RETURN_EXCHANGE_PROCESSED',
+        resource: 'Order',
+        resourceId: orderId,
+        userId: req.user._id,
+        details: {
+          orderNumber: order.orderNumber,
+          action,
+          type: order.returnExchange.type,
+          adminNotes,
+        },
+      });
+
+      // Notify customer
+      if (order.userId) {
+        await notificationService.sendReturnExchangeUpdate(
+          order.userId,
+          order.orderNumber,
+          order.returnExchange.type,
+          action
+        );
+      }
+
+      res.status(200).json({
+        success: true,
+        message: `Return/Exchange request ${action} successfully`,
+        data: order,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to process return/exchange request',
+        error: error.message,
+      });
+    }
+  }
 }
 
 module.exports = new AdminOrderController();

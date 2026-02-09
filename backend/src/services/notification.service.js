@@ -221,10 +221,94 @@ const verifyEmailConnection = async () => {
   }
 };
 
+// Send return/exchange status update notification
+const sendReturnExchangeUpdate = async (userId, orderNumber, type, status) => {
+  try {
+    const User = require('../modules/user/user.model');
+    const user = await User.findById(userId);
+    
+    if (!user || !user.email) {
+      console.log('User or email not found for notification');
+      return { success: false, message: 'User email not found' };
+    }
+
+    const statusText = status === 'approved' ? 'Approved' : 'Rejected';
+    const typeText = type === 'return' ? 'Return' : 'Exchange';
+
+    const mailOptions = {
+      from: `"DivyaShree Fashion" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: `${typeText} Request ${statusText} - Order #${orderNumber}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: 'Arial', sans-serif; background-color: #f5f5dc; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 40px auto; background: white; border: 2px solid #6B1E1E; }
+            .header { background: linear-gradient(135deg, #6B1E1E 0%, #8B2E2E 100%); padding: 30px; text-align: center; }
+            .logo { color: #D4AF37; font-size: 32px; font-weight: bold; letter-spacing: 2px; }
+            .content { padding: 40px 30px; }
+            .status-box { background: ${status === 'approved' ? '#d4edda' : '#f8d7da'}; border: 2px solid ${status === 'approved' ? '#28a745' : '#dc3545'}; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
+            .footer { background: #f5f5dc; padding: 20px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #D4AF37; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">✦ DIVYASHREE ✦</div>
+              <p style="color: #F5F5DC; margin: 10px 0 0 0;">Ethnic Fashion for Modern Women</p>
+            </div>
+            
+            <div class="content">
+              <h2 style="color: #6B1E1E;">Hello ${user.firstName}!</h2>
+              <p style="color: #333; line-height: 1.6;">Your ${typeText.toLowerCase()} request for order <strong>#${orderNumber}</strong> has been ${statusText.toLowerCase()}.</p>
+              
+              <div class="status-box">
+                <h3 style="margin: 0; color: ${status === 'approved' ? '#28a745' : '#dc3545'};">${statusText}</h3>
+                <p style="margin: 10px 0 0 0; color: #333;">Your ${typeText.toLowerCase()} request has been ${statusText.toLowerCase()} by our team.</p>
+              </div>
+
+              ${status === 'approved' ? `
+                <p style="color: #333; line-height: 1.6;">Our team will contact you shortly to process your ${typeText.toLowerCase()} request.</p>
+              ` : `
+                <p style="color: #333; line-height: 1.6;">If you have any questions, please contact our customer support.</p>
+              `}
+              
+              <p style="color: #666; margin-top: 30px;">Thank you for shopping with DivyaShree!</p>
+            </div>
+            
+            <div class="footer">
+              <p style="margin: 0;">© ${new Date().getFullYear()} DivyaShree Fashion. All rights reserved.</p>
+              <p style="margin: 5px 0 0 0;">Contact: support@divyashree.com</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    };
+
+    await emailTransporter.sendMail(mailOptions);
+    console.log(`✅ Return/Exchange update email sent to ${user.email}`);
+    
+    return {
+      success: true,
+      message: 'Notification sent successfully',
+    };
+  } catch (error) {
+    console.error('Failed to send return/exchange notification:', error.message);
+    return {
+      success: false,
+      message: 'Failed to send notification',
+    };
+  }
+};
+
 module.exports = {
   sendOTPSMS,
   sendOTPEmail,
   sendOrderSMS,
   sendPasswordResetEmail,
+  sendReturnExchangeUpdate,
   verifyEmailConnection,
 };

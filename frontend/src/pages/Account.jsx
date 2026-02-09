@@ -16,6 +16,11 @@ const Account = () => {
   const [showProfileEditModal, setShowProfileEditModal] = useState(false);
   const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showReturnExchangeModal, setShowReturnExchangeModal] = useState(false);
+  const [returnExchangeType, setReturnExchangeType] = useState('return');
+  const [cancelReason, setCancelReason] = useState('');
+  const [returnExchangeReason, setReturnExchangeReason] = useState('');
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const { user, logout, refreshUser } = useAuth();
@@ -216,6 +221,69 @@ const Account = () => {
   const closeOrderDetailsModal = () => {
     setShowOrderDetailsModal(false);
     setSelectedOrder(null);
+  };
+
+  const canCancelOrder = (order) => {
+    return !['processing', 'shipped', 'delivered', 'cancelled'].includes(order.status);
+  };
+
+  const canRequestReturnExchange = (order) => {
+    if (order.status !== 'delivered') return false;
+    if (order.returnExchange && order.returnExchange.status) return false;
+    
+    // Use deliveredAt if available, otherwise use updatedAt as fallback
+    const deliveryDate = order.deliveredAt || order.updatedAt;
+    if (!deliveryDate) return false;
+    
+    const daysSinceDelivery = (new Date() - new Date(deliveryDate)) / (1000 * 60 * 60 * 24);
+    return daysSinceDelivery <= 1;
+  };
+
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return;
+    
+    try {
+      const response = await orderAPI.cancelOrder(selectedOrder._id, cancelReason);
+      if (response.success) {
+        toast.success('Order cancelled successfully');
+        setShowCancelModal(false);
+        setCancelReason('');
+        fetchOrders(); // Refresh orders
+        closeOrderDetailsModal();
+      } else {
+        toast.error(response.message || 'Failed to cancel order');
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast.error('Failed to cancel order');
+    }
+  };
+
+  const handleRequestReturnExchange = async () => {
+    if (!selectedOrder || !returnExchangeReason.trim()) {
+      toast.error('Please provide a reason');
+      return;
+    }
+    
+    try {
+      const response = await orderAPI.requestReturnExchange(
+        selectedOrder._id,
+        returnExchangeType,
+        returnExchangeReason
+      );
+      if (response.success) {
+        toast.success(response.message || `${returnExchangeType === 'return' ? 'Return' : 'Exchange'} request submitted successfully`);
+        setShowReturnExchangeModal(false);
+        setReturnExchangeReason('');
+        fetchOrders(); // Refresh orders
+        closeOrderDetailsModal();
+      } else {
+        toast.error(response.message || 'Failed to submit request');
+      }
+    } catch (error) {
+      console.error('Error submitting return/exchange:', error);
+      toast.error('Failed to submit request');
+    }
   };
 
   if (!user) {
@@ -864,15 +932,197 @@ const Account = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Return/Exchange Status */}
+              {selectedOrder.returnExchange && selectedOrder.returnExchange.status && (
+                <div>
+                  <h3 className="font-display text-lg font-semibold mb-3">
+                    {selectedOrder.returnExchange.type === 'return' ? 'Return' : 'Exchange'} Request
+                  </h3>
+                  <div className="p-4 border border-border rounded-lg space-y-2">
+                    <div className="flex justify-between font-body text-sm">
+                      <span className="text-muted-foreground">Status</span>
+                      <span className={`font-medium ${
+                        selectedOrder.returnExchange.status === 'approved' ? 'text-green-600' :
+                        selectedOrder.returnExchange.status === 'rejected' ? 'text-red-600' :
+                        'text-yellow-600'
+                      }`}>
+                        {selectedOrder.returnExchange.status.charAt(0).toUpperCase() + selectedOrder.returnExchange.status.slice(1)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-body text-sm">
+                      <span className="text-muted-foreground">Reason</span>
+                      <span className="text-foreground">{selectedOrder.returnExchange.reason}</span>
+                    </div>
+                    {selectedOrder.returnExchange.adminNotes && (
+                      <div className="pt-2 border-t border-border mt-2">
+                        <p className="font-body text-sm text-muted-foreground mb-1">Admin Notes:</p>
+                        <p className="font-body text-sm text-foreground">{selectedOrder.returnExchange.adminNotes}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="p-6 border-t border-border">
-              <button
-                onClick={closeOrderDetailsModal}
-                className="w-full px-6 py-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-all rounded-sm font-body text-sm uppercase tracking-wider"
+              <div className="flex flex-col sm:flex-row gap-3">
+                {canCancelOrder(selectedOrder) && (
+                  <button
+                    onClick={() => setShowCancelModal(true)}
+                    className="flex-1 px-6 py-3 border-2 border-red-600 text-red-600 hover:bg-red-50 transition-all rounded-sm font-body text-sm uppercase tracking-wider"
+                  >
+                    Cancel Order
+                  </button>
+                )}
+                {canRequestReturnExchange(selectedOrder) && (
+                  <button
+                    onClick={() => setShowReturnExchangeModal(true)}
+                    className="flex-1 px-6 py-3 border-2 border-primary text-primary hover:bg-primary/10 transition-all rounded-sm font-body text-sm uppercase tracking-wider"
+                  >
+                    Return/Exchange
+                  </button>
+                )}
+                <button
+                  onClick={closeOrderDetailsModal}
+                  className="flex-1 px-6 py-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-all rounded-sm font-body text-sm uppercase tracking-wider"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Order Modal */}
+      {showCancelModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-card rounded-lg shadow-2xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h2 className="font-display text-2xl text-foreground">Cancel Order</h2>
+              <button 
+                onClick={() => setShowCancelModal(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                Close
+                <X size={24} />
               </button>
+            </div>
+
+            <div className="p-6">
+              <p className="font-body text-sm text-muted-foreground mb-4">
+                Are you sure you want to cancel order #{selectedOrder.orderNumber}?
+              </p>
+              
+              <div className="mb-4">
+                <label className="block font-body text-sm font-medium text-foreground mb-2">
+                  Reason for Cancellation (Optional)
+                </label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-border rounded-sm font-body text-sm focus:outline-none focus:border-primary transition-colors resize-none"
+                  rows="3"
+                  placeholder="e.g., Changed my mind, ordered by mistake..."
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowCancelModal(false)}
+                  className="flex-1 px-6 py-3 border-2 border-border hover:border-primary transition-all rounded-sm font-body text-sm uppercase tracking-wider"
+                >
+                  Keep Order
+                </button>
+                <button
+                  onClick={handleCancelOrder}
+                  className="flex-1 px-6 py-3 bg-red-600 text-white hover:bg-red-700 transition-all rounded-sm font-body text-sm uppercase tracking-wider"
+                >
+                  Cancel Order
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Return/Exchange Request Modal */}
+      {showReturnExchangeModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-card rounded-lg shadow-2xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h2 className="font-display text-2xl text-foreground">Return/Exchange Request</h2>
+              <button 
+                onClick={() => setShowReturnExchangeModal(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-4">
+                <label className="block font-body text-sm font-medium text-foreground mb-2">
+                  Request Type
+                </label>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setReturnExchangeType('return')}
+                    className={`flex-1 px-4 py-2 rounded-sm font-body text-sm transition-all ${
+                      returnExchangeType === 'return'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    Return
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReturnExchangeType('exchange')}
+                    className={`flex-1 px-4 py-2 rounded-sm font-body text-sm transition-all ${
+                      returnExchangeType === 'exchange'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    Exchange
+                  </button>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block font-body text-sm font-medium text-foreground mb-2">
+                  Reason *
+                </label>
+                <textarea
+                  value={returnExchangeReason}
+                  onChange={(e) => setReturnExchangeReason(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-border rounded-sm font-body text-sm focus:outline-none focus:border-primary transition-colors resize-none"
+                  rows="4"
+                  placeholder="Please describe the reason for return/exchange..."
+                  required
+                />
+              </div>
+
+              <p className="font-body text-xs text-muted-foreground mb-4">
+                * Returns/exchanges must be requested within 1 day of delivery. Admin will review your request.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowReturnExchangeModal(false)}
+                  className="flex-1 px-6 py-3 border-2 border-border hover:border-primary transition-all rounded-sm font-body text-sm uppercase tracking-wider"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRequestReturnExchange}
+                  className="flex-1 px-6 py-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-all rounded-sm font-body text-sm uppercase tracking-wider"
+                >
+                  Submit Request
+                </button>
+              </div>
             </div>
           </div>
         </div>

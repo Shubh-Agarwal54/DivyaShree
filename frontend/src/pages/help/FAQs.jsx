@@ -15,9 +15,9 @@ const FAQs = () => {
     { q: "Are the colors accurate in photos?", a: "We try our best to display accurate colors. However, actual colors may vary slightly due to screen settings." },
     { q: "Do you offer custom stitching?", a: "Yes, we offer custom stitching services. Please contact customer support for details." },
     { q: "How do I track my order?", a: "You'll receive a tracking link via email and SMS once your order is shipped. You can also track from your account." },
-    { q: "What is your return policy?", a: "Items can be returned within 7 days of delivery if unused and in original condition with tags attached." },
+    { q: "What is your return policy?", a: "Items can be returned within 1 day of delivery if unused and in original condition with tags attached." },
     { q: "Do you have a physical store?", a: "Yes, we have stores in major cities. Visit our 'Stores' page for locations and timings." },
-    { q: "How do I contact customer support?", a: "You can reach us via email at care@divyashree.com, call +91 98765 43210, or use the contact form." },
+    { q: "How do I contact customer support?", a: "You can reach us via email at divyashreefashion2025@gmail.com, call +91 89798 93427, or use the contact form." },
   ];
 
   return (

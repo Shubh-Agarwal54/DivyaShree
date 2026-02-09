@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -8,6 +9,7 @@ import { useCart } from '@/context/CartContext';
 const Cart = () => {
   const navigate = useNavigate();
   const { cartItems, updateQuantity, removeFromCart, getCartTotal, getCartItemCount } = useCart();
+  const { user } = useAuth();
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
 
@@ -63,6 +65,12 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
+    // If not logged in, send user to login and preserve intended destination
+    if (!user) {
+      navigate('/login', { state: { from: '/checkout' } });
+      return;
+    }
+
     // Navigate to checkout with cart data
     navigate('/checkout');
   };
