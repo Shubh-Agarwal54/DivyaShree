@@ -95,6 +95,20 @@ const Users = () => {
     }
   };
 
+  const handleRoleChange = async (userId, newRole, currentRole) => {
+    if (newRole === currentRole) return;
+    
+    if (window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
+      try {
+        await api.patch(`/admin/permissions/user/${userId}/role`, { role: newRole });
+        fetchUsers();
+        alert('Role updated successfully');
+      } catch (err) {
+        alert(err.response?.data?.message || 'Failed to update user role');
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -129,6 +143,9 @@ const Users = () => {
             <option value="">All Roles</option>
             <option value="user">User</option>
             <option value="admin">Admin</option>
+            <option value="subadmin">Sub Admin</option>
+            <option value="masteradmin">Master Admin</option>
+            <option value="superadmin">Super Admin</option>
           </select>
 
           {/* Status Filter */}
@@ -179,11 +196,23 @@ const Users = () => {
                         <p className="font-body text-sm text-gray-900">{user.phone || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                          user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {user.role}
-                        </span>
+                        <select
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user._id, e.target.value, user.role)}
+                          className={`px-2 py-1 rounded-full text-xs font-medium border-0 cursor-pointer focus:ring-2 focus:ring-offset-1 ${
+                            user.role === 'superadmin' ? 'bg-red-100 text-red-800 focus:ring-red-500' :
+                            user.role === 'masteradmin' ? 'bg-orange-100 text-orange-800 focus:ring-orange-500' :
+                            user.role === 'subadmin' ? 'bg-blue-100 text-blue-800 focus:ring-blue-500' :
+                            user.role === 'admin' ? 'bg-purple-100 text-purple-800 focus:ring-purple-500' : 
+                            'bg-gray-100 text-gray-800 focus:ring-gray-500'
+                          }`}
+                        >
+                          <option value="user">user</option>
+                          <option value="admin">admin</option>
+                          <option value="subadmin">subadmin</option>
+                          <option value="masteradmin">masteradmin</option>
+                          <option value="superadmin">superadmin</option>
+                        </select>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1">
