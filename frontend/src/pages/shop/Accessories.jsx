@@ -2,21 +2,43 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductGrid from '@/components/ProductGrid';
+import { productAPI } from '@/services/product.api';
+import { getProductsByCategory } from '@/data/products';
 
 const Accessories = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('featured');
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  
+  useEffect(() => { 
+    window.scrollTo(0, 0); 
+    fetchProducts();
+  }, [sortBy]);
 
-  const products = Array.from({ length: 12 }, (_, i) => ({
-    id: i + 1,
-    name: `Ethnic Accessory ${i + 1}`,
-    price: 599 + (i * 200),
-    originalPrice: 1299 + (i * 200),
-    image: `https://placehold.co/400x600/8B0000/FFF?text=Accessory+${i + 1}`,
-    rating: 4.4,
-    reviews: 67 + i,
-    badge: i % 4 === 0 ? 'Bestseller' : '',
-  }));
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const params = { category: 'accessories', limit: 50 };
+      if (sortBy === 'price-low') {
+        params.sortBy = 'price';
+        params.order = 'asc';
+      } else if (sortBy === 'price-high') {
+        params.sortBy = 'price';
+        params.order = 'desc';
+      }
+      const result = await productAPI.getAllProducts(params);
+      if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+        setProducts(result.data.products);
+      } else {
+        setProducts(getProductsByCategory('accessories'));
+      }
+    } catch (error) {
+      console.error('Error fetching accessories:', error);
+      setProducts(getProductsByCategory('accessories'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">

@@ -21,17 +21,60 @@ const Sarees = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     fetchProducts();
-  }, []);
+  }, [filters.sortBy, filters.fabric, filters.occasion, filters.price]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const result = await productAPI.getAllProducts({ category: 'sarees', limit: 50 });
-      if (result.success && result.data && result.data.products && result.data.products.length > 0) {
-        setProducts(result.data.products);
-      } else {
-        setProducts(getProductsByCategory('sarees'));
+      const params = { category: 'sarees', limit: 50 };
+      
+      // Apply fabric filter
+      if (filters.fabric !== 'all') {
+        params.fabric = filters.fabric;
       }
+      
+      // Apply occasion filter
+      if (filters.occasion !== 'all') {
+        params.occasion = filters.occasion;
+      }
+      
+      // Apply sorting
+      if (filters.sortBy === 'price-low') {
+        params.sortBy = 'price';
+        params.order = 'asc';
+      } else if (filters.sortBy === 'price-high') {
+        params.sortBy = 'price';
+        params.order = 'desc';
+      } else if (filters.sortBy === 'newest') {
+        params.sortBy = 'createdAt';
+        params.order = 'desc';
+      } else if (filters.sortBy === 'popular') {
+        params.sortBy = 'soldCount';
+        params.order = 'desc';
+      }
+      
+      const result = await productAPI.getAllProducts(params);
+      let filteredProducts = [];
+      
+      if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+        filteredProducts = result.data.products;
+      } else {
+        filteredProducts = getProductsByCategory('sarees');
+      }
+      
+      // Apply price filter client-side
+      if (filters.price !== 'all') {
+        filteredProducts = filteredProducts.filter(product => {
+          const price = product.price;
+          if (filters.price === 'under-3000') return price < 3000;
+          if (filters.price === '3000-5000') return price >= 3000 && price <= 5000;
+          if (filters.price === '5000-10000') return price >= 5000 && price <= 10000;
+          if (filters.price === 'above-10000') return price > 10000;
+          return true;
+        });
+      }
+      
+      setProducts(filteredProducts);
     } catch (error) {
       console.error('Error fetching sarees:', error);
       setProducts(getProductsByCategory('sarees'));
@@ -133,7 +176,7 @@ const Sarees = () => {
                 <div className="mb-6 pb-6 border-b border-border">
                   <h4 className="font-body font-semibold text-sm text-foreground mb-3">Fabric</h4>
                   <div className="space-y-2">
-                    {['all', 'silk', 'cotton', 'georgette', 'chiffon', 'banarasi'].map((fabric) => (
+                    {['all', 'silk', 'cotton', 'georgette', 'chiffon', 'net'].map((fabric) => (
                       <label key={fabric} className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"

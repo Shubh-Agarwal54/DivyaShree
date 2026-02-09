@@ -15,12 +15,20 @@ const Lehengas = () => {
   useEffect(() => { 
     window.scrollTo(0, 0); 
     fetchProducts();
-  }, []);
+  }, [filters.sortBy]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const result = await productAPI.getAllProducts({ category: 'lehengas', limit: 50 });
+      const params = { category: 'lehengas', limit: 50 };
+      if (filters.sortBy === 'price-low') {
+        params.sortBy = 'price';
+        params.order = 'asc';
+      } else if (filters.sortBy === 'price-high') {
+        params.sortBy = 'price';
+        params.order = 'desc';
+      }
+      const result = await productAPI.getAllProducts(params);
       if (result.success && result.data && result.data.products && result.data.products.length > 0) {
         setProducts(result.data.products);
       } else {

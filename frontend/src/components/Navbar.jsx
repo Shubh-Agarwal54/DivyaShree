@@ -11,8 +11,8 @@ const navLinks = [
   { label: 'SAREES', to: '/shop/sarees' },
   { label: 'LEHENGAS', to: '/shop/lehengas' },
   { label: 'SUITS & SETS', to: '/shop/suits-sets' },
-  { label: 'GOWNS & KURTIS', to: '/shop/gowns' },
-  { label: 'OCCASION', to: '/occasion' },
+  { label: 'GOWNS', to: '/shop/gowns' },
+  { label: 'KURTIS', to: '/shop/kurtis' },
 ];
 
 const Navbar = () => {

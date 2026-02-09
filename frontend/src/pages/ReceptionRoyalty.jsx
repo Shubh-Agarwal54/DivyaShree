@@ -34,7 +34,21 @@ const ReceptionRoyalty = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const result = await productAPI.getAllProducts({ occasion: 'reception', limit: 50 });
+        const params = { occasion: 'reception', limit: 50 };
+        if (sortBy === 'price-low') {
+          params.sortBy = 'price';
+          params.order = 'asc';
+        } else if (sortBy === 'price-high') {
+          params.sortBy = 'price';
+          params.order = 'desc';
+        } else if (sortBy === 'newest') {
+          params.sortBy = 'createdAt';
+          params.order = 'desc';
+        } else if (sortBy === 'rating') {
+          params.sortBy = 'rating';
+          params.order = 'desc';
+        }
+        const result = await productAPI.getAllProducts(params);
         if (result.success && result.data?.products?.length > 0) {
           setProducts(result.data.products);
         }
@@ -45,7 +59,7 @@ const ReceptionRoyalty = () => {
       }
     };
     fetchProducts();
-  }, []);
+  }, [sortBy]);
 
   const formatPrice = (price) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
   const calculateDiscount = (original, current) => Math.round(((original - current) / original) * 100);

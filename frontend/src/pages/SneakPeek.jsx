@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Star, SlidersHorizontal, Sparkles } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { productAPI } from '@/services/product.api';
 import product1 from '@/assets/product-1.jpg';
 import product2 from '@/assets/product-2.jpg';
 import product3 from '@/assets/product-3.jpg';
@@ -12,7 +13,7 @@ import product6 from '@/assets/product-6.jpg';
 import product7 from '@/assets/product-7.jpg';
 import product8 from '@/assets/product-8.jpg';
 
-const products = [
+const fallbackProducts = [
   { id: 1, name: 'New Arrival: Pastel Lavender Lehenga', image: product4, price: 24999, originalPrice: 35999, rating: 4.9, reviews: 312, isNew: true },
   { id: 2, name: 'Just In: Mint Green Sharara', image: product6, price: 11999, originalPrice: 16999, rating: 4.4, reviews: 167, isNew: true },
   { id: 3, name: 'Fresh Drop: Coral Pink Anarkali', image: product7, price: 18999, originalPrice: 27999, rating: 4.6, reviews: 198, isNew: true },
@@ -24,8 +25,41 @@ const products = [
 ];
 
 const SneakPeek = () => {
+  const [products, setProducts] = useState(fallbackProducts);
+  const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('featured');
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  
+  useEffect(() => { 
+    window.scrollTo(0, 0); 
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const params = { isNewArrival: 'true', limit: 50 };
+        if (sortBy === 'price-low') {
+          params.sortBy = 'price';
+          params.order = 'asc';
+        } else if (sortBy === 'price-high') {
+          params.sortBy = 'price';
+          params.order = 'desc';
+        } else if (sortBy === 'newest') {
+          params.sortBy = 'createdAt';
+          params.order = 'desc';
+        } else if (sortBy === 'rating') {
+          params.sortBy = 'rating';
+          params.order = 'desc';
+        }
+        const result = await productAPI.getAllProducts(params);
+        if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+          setProducts(result.data.products);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [sortBy]);
 
   const formatPrice = (price) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
   const calculateDiscount = (original, current) => Math.round(((original - current) / original) * 100);

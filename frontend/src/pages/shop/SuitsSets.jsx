@@ -13,12 +13,20 @@ const SuitsSets = () => {
   useEffect(() => { 
     window.scrollTo(0, 0); 
     fetchProducts();
-  }, []);
+  }, [sortBy]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const result = await productAPI.getAllProducts({ category: 'suits', limit: 50 });
+      const params = { category: 'suits', limit: 50 };
+      if (sortBy === 'price-low') {
+        params.sortBy = 'price';
+        params.order = 'asc';
+      } else if (sortBy === 'price-high') {
+        params.sortBy = 'price';
+        params.order = 'desc';
+      }
+      const result = await productAPI.getAllProducts(params);
       if (result.success && result.data && result.data.products && result.data.products.length > 0) {
         setProducts(result.data.products);
       } else {

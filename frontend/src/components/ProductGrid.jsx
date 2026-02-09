@@ -88,15 +88,27 @@ const fallbackProducts = [
   },
 ];
 
-const ProductGrid = ({ title, subtitle, limit = 8 }) => {
-  const [products, setProducts] = useState(fallbackProducts);
-  const [loading, setLoading] = useState(true);
+const ProductGrid = ({ title, subtitle, limit = 8, products: externalProducts = null, category = null, fabric = null }) => {
+  const [products, setProducts] = useState(externalProducts || fallbackProducts);
+  const [loading, setLoading] = useState(!externalProducts);
   const [displayCount, setDisplayCount] = useState(limit);
 
   useEffect(() => {
+    // If external products are provided, use them directly
+    if (externalProducts) {
+      setProducts(externalProducts);
+      setLoading(false);
+      return;
+    }
+
+    // Otherwise, fetch products with filters
     const fetchProducts = async () => {
       try {
-        const result = await productAPI.getAllProducts({ limit: 50 });
+        const params = { limit: 50 };
+        if (category) params.category = category;
+        if (fabric) params.fabric = fabric;
+        
+        const result = await productAPI.getAllProducts(params);
         if (result.success && result.data && result.data.products && result.data.products.length > 0) {
           setProducts(result.data.products);
         }
@@ -109,7 +121,7 @@ const ProductGrid = ({ title, subtitle, limit = 8 }) => {
     };
 
     fetchProducts();
-  }, []);
+  }, [externalProducts, category, fabric]);
 
   const displayProducts = products.slice(0, displayCount);
   

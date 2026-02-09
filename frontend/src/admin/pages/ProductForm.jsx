@@ -26,7 +26,7 @@ const ProductForm = () => {
     isNewArrival: false
   });
 
-  const categories = ['sarees', 'lehengas', 'kurtis', 'suits', 'gowns'];
+  const categories = ['sarees', 'lehengas', 'kurtis', 'suits', 'gowns', 'accessories'];
   const fabrics = ['Georgette', 'Silk', 'Organza', 'Tissue', 'Cotton', 'Chiffon', 'Velvet', 'Net', 'Brocade', 'Chanderi'];
   const occasions = ['diwali', 'puja', 'mehndi', 'sangeet', 'haldi', 'reception', 'wedding', 'karwachauth', 'festival', 'party', 'casual', 'formal', 'bridal'];
 

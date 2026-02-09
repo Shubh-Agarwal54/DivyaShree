@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Star, SlidersHorizontal, TrendingUp } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { productAPI } from '@/services/product.api';
 import product1 from '@/assets/product-1.jpg';
 import product2 from '@/assets/product-2.jpg';
 import product3 from '@/assets/product-3.jpg';
@@ -12,7 +13,7 @@ import product6 from '@/assets/product-6.jpg';
 import product7 from '@/assets/product-7.jpg';
 import product8 from '@/assets/product-8.jpg';
 
-const products = [
+const fallbackProducts = [
   { id: 1, name: 'Trending: Pink Silk Saree', image: product1, price: 12999, originalPrice: 18999, rating: 4.5, reviews: 128, trending: true },
   { id: 2, name: 'Hot Pick: Maroon Lehenga', image: product2, price: 15999, originalPrice: 22999, rating: 4.8, reviews: 256, trending: true },
   { id: 3, name: 'Must-Have: Teal Georgette Set', image: product3, price: 9999, originalPrice: 14999, rating: 4.3, reviews: 89, trending: true },
@@ -24,8 +25,44 @@ const products = [
 ];
 
 const OshiCrushers = () => {
+  const [products, setProducts] = useState(fallbackProducts);
+  const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('featured');
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  
+  useEffect(() => { 
+    window.scrollTo(0, 0); 
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const params = { limit: 50 };
+        if (sortBy === 'price-low') {
+          params.sortBy = 'price';
+          params.order = 'asc';
+        } else if (sortBy === 'price-high') {
+          params.sortBy = 'price';
+          params.order = 'desc';
+        } else if (sortBy === 'newest') {
+          params.sortBy = 'createdAt';
+          params.order = 'desc';
+        } else if (sortBy === 'rating') {
+          params.sortBy = 'rating';
+          params.order = 'desc';
+        } else {
+          params.sortBy = 'soldCount';
+          params.order = 'desc';
+        }
+        const result = await productAPI.getAllProducts(params);
+        if (result.success && result.data && result.data.products && result.data.products.length > 0) {
+          setProducts(result.data.products);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [sortBy]);
 
   const formatPrice = (price) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(price);
   const calculateDiscount = (original, current) => Math.round(((original - current) / original) * 100);
