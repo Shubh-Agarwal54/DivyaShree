@@ -78,6 +78,7 @@ import Sale from "./pages/Sale";
 import Bestsellers from "./pages/Bestsellers";
 import NewArrivals from "./pages/NewArrivals";
 import Occasion from "./pages/Occasion";
+import Search from "./pages/Search";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const App = () => (
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/account" element={<Account />} />
                 <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/search" element={<Search />} />
             
             {/* Navbar Routes */}
             <Route path="/sale" element={<Sale />} />

@@ -94,79 +94,144 @@ class AdminDashboardController {
   // Get analytics data
   async getAnalytics(req, res) {
     try {
-      const { startDate, endDate, metric } = req.query;
+      const { period } = req.query;
 
-      const query = {};
-      if (startDate || endDate) {
-        query.createdAt = {};
-        if (startDate) query.createdAt.$gte = new Date(startDate);
-        if (endDate) query.createdAt.$lte = new Date(endDate);
+      // Determine date range based on period
+      const now = new Date();
+      let startDate = new Date();
+      
+      switch (period) {
+        case 'week':
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          startDate.setDate(now.getDate() - 30);
+          break;
+        case 'year':
+          startDate.setFullYear(now.getFullYear() - 1);
+          break;
+        default:
+          startDate.setDate(now.getDate() - 30);
       }
 
-      let analyticsData = {};
+      const query = { createdAt: { $gte: startDate } };
 
-      // Sales analytics
-      if (!metric || metric === 'sales') {
-        const salesData = await Order.aggregate([
-          { $match: { ...query, status: { $ne: 'cancelled' } } },
-          {
-            $group: {
-              _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-              revenue: { $sum: '$total' },
-              orders: { $sum: 1 },
-              avgOrderValue: { $avg: '$total' },
-            },
+      // Sales Data
+      const salesAggregation = await Order.aggregate([
+        { $match: { ...query, status: { $ne: 'cancelled' } } },
+        {
+          $group: {
+            _id: null,
+            totalOrders: { $sum: 1 },
+            totalRevenue: { $sum: '$total' },
+            averageOrderValue: { $avg: '$total' },
           },
-          { $sort: { _id: 1 } },
-        ]);
+        },
+      ]);
 
-        analyticsData.sales = salesData;
-      }
-
-      // User growth analytics
-      if (!metric || metric === 'users') {
-        const userGrowth = await User.aggregate([
-          { $match: query },
-          {
-            $group: {
-              _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-              newUsers: { $sum: 1 },
-            },
+      const dailySales = await Order.aggregate([
+        { $match: { ...query, status: { $ne: 'cancelled' } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            revenue: { $sum: '$total' },
+            orders: { $sum: 1 },
           },
-          { $sort: { _id: 1 } },
-        ]);
+        },
+        { $sort: { _id: 1 } },
+      ]);
 
-        analyticsData.userGrowth = userGrowth;
-      }
+      const salesData = {
+        totalOrders: salesAggregation[0]?.totalOrders || 0,
+        totalRevenue: Math.round(salesAggregation[0]?.totalRevenue || 0),
+        averageOrderValue: Math.round(salesAggregation[0]?.averageOrderValue || 0),
+        conversionRate: 0, // Can be calculated if we track total visits
+        dailySales: dailySales.map(day => ({
+          date: day._id,
+          revenue: Math.round(day.revenue),
+          orders: day.orders,
+        })),
+      };
 
-      // Product performance
-      if (!metric || metric === 'products') {
-        const productPerformance = await Product.aggregate([
-          {
-            $project: {
-              name: 1,
-              soldCount: 1,
-              viewCount: 1,
-              revenue: { $multiply: ['$price', '$soldCount'] },
-              conversionRate: {
-                $cond: [
-                  { $gt: ['$viewCount', 0] },
-                  { $multiply: [{ $divide: ['$soldCount', '$viewCount'] }, 100] },
-                  0,
-                ],
+      // User Growth
+      const userStats = await User.aggregate([
+        {
+          $facet: {
+            newUsers: [
+              { $match: query },
+              { $count: 'count' },
+            ],
+            totalUsers: [
+              { $count: 'count' },
+            ],
+            previousPeriodUsers: [
+              {
+                $match: {
+                  createdAt: {
+                    $gte: new Date(startDate.getTime() - (now.getTime() - startDate.getTime())),
+                    $lt: startDate,
+                  },
+                },
               },
-            },
+              { $count: 'count' },
+            ],
           },
-          { $sort: { revenue: -1 } },
-          { $limit: 20 },
-        ]);
+        },
+      ]);
 
-        analyticsData.productPerformance = productPerformance;
-      }
+      const newUsers = userStats[0]?.newUsers[0]?.count || 0;
+      const totalUsers = userStats[0]?.totalUsers[0]?.count || 0;
+      const previousPeriodUsers = userStats[0]?.previousPeriodUsers[0]?.count || 0;
+      const growthRate = previousPeriodUsers > 0 
+        ? Math.round(((newUsers - previousPeriodUsers) / previousPeriodUsers) * 100)
+        : 0;
+
+      const userGrowth = {
+        newUsers,
+        totalUsers,
+        activeUsers: totalUsers, // Can be refined with actual activity tracking
+        growthRate,
+      };
+
+      // Product Performance
+      const topProducts = await Product.find()
+        .sort({ soldCount: -1 })
+        .limit(5)
+        .select('name soldCount price images category');
+
+      const categoryStats = await Product.aggregate([
+        {
+          $group: {
+            _id: '$category',
+            count: { $sum: 1 },
+            revenue: { $sum: { $multiply: ['$price', { $ifNull: ['$soldCount', 0] }] } },
+          },
+        },
+        { $sort: { revenue: -1 } },
+      ]);
+
+      const productPerformance = {
+        topProducts: topProducts.map(product => ({
+          _id: product._id,
+          name: product.name,
+          images: product.images,
+          soldCount: product.soldCount || 0,
+          revenue: Math.round((product.price || 0) * (product.soldCount || 0)),
+        })),
+        categoryStats: categoryStats.map(cat => ({
+          _id: cat._id,
+          count: cat.count,
+          revenue: Math.round(cat.revenue || 0),
+        })),
+      };
 
       res.status(200).json({
         success: true,
-        data: analyticsData,
+        data: {
+          salesData,
+          userGrowth,
+          productPerformance,
+        },
       });
     } catch (error) {
       res.status(500).json({

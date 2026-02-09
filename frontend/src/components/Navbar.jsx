@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, User, Heart, ShoppingBag, Menu, X, ChevronDown } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import './NavBar.css'
@@ -16,10 +16,20 @@ const navLinks = [
 ];
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { getCartItemCount } = useCart();
   const cartCount = getCartItemCount();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+      setIsMenuOpen(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-background">
@@ -46,16 +56,19 @@ const Navbar = () => {
 
             {/* Search bar - Desktop */}
             <div className="hidden lg:flex items-center flex-1 max-w-xs">
-              <div className="relative w-full">
+              <form onSubmit={handleSearch} className="relative w-full">
                 <input
                   type="text"
                   placeholder="Search for Sarees, Lehengas..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSearch(e);
+                  }}
                   className="w-full pl-10 pr-4 py-2 border border-border rounded-sm bg-background text-sm font-body focus:outline-none focus:border-primary"
                 />
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-              </div>
+              </form>
             </div>
 
             {/* Logo */}
@@ -91,16 +104,19 @@ const Navbar = () => {
 
           {/* Search bar - Mobile */}
           <div className="lg:hidden pb-4">
-            <div className="relative">
+            <form onSubmit={handleSearch} className="relative">
               <input
                 type="text"
                 placeholder="Search for Sarees, Lehengas..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSearch(e);
+                }}
                 className="w-full pl-10 pr-4 py-2 border border-border rounded-sm bg-background text-sm font-body focus:outline-none focus:border-primary"
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-            </div>
+            </form>
           </div>
 
           {/* Navigation Links - Desktop */}

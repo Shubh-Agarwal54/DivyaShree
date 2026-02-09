@@ -104,7 +104,7 @@ export default function Checkout() {
   const subtotal = getCartTotal();
   const shipping = subtotal > 2999 ? 0 : 99;
   const tax = Math.round(subtotal * 0.05);
-  const total = subtotal + shipping + tax;
+  const total = subtotal + shipping;
 
   const validateStep = (step) => {
     const newErrors = {};
@@ -170,7 +170,7 @@ export default function Checkout() {
           name: item.name,
           price: item.price,
           quantity: item.quantity,
-          image: item.image,
+          image: Array.isArray(item.images) ? item.images[0] : (item.images || item.image),
           size: item.size,
           color: item.color,
         })),
@@ -866,10 +866,10 @@ export default function Checkout() {
                       <span className="text-muted-foreground">Shipping</span>
                       <span className="text-foreground">{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span>
                     </div>
-                    <div className="flex justify-between font-body text-sm">
+                    {/* <div className="flex justify-between font-body text-sm">
                       <span className="text-muted-foreground">Tax (5%)</span>
                       <span className="text-foreground">{formatPrice(tax)}</span>
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="flex justify-between items-center mb-4">

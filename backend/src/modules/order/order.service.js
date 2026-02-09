@@ -1,15 +1,38 @@
 const Order = require('./order.model');
+const Product = require('../product/product.model');
 
 class OrderService {
   // Create new order
   async createOrder(userId, orderData) {
     try {
+      // Generate unique order number
+      const timestamp = Date.now().toString().slice(-8);
+      const orderNumber = `DS${timestamp}`;
+
       const order = new Order({
         userId,
+        orderNumber,
         ...orderData,
       });
 
       await order.save();
+
+      // Update product soldCount and stockQuantity
+      if (orderData.items && Array.isArray(orderData.items)) {
+        for (const item of orderData.items) {
+          try {
+            const product = await Product.findById(item.productId);
+            if (product) {
+              product.soldCount = (product.soldCount || 0) + (item.quantity || 0);
+              product.stockQuantity = Math.max(0, (product.stockQuantity || 0) - (item.quantity || 0));
+              product.inStock = product.stockQuantity > 0;
+              await product.save();
+            }
+          } catch (productError) {
+            console.error(`Failed to update product ${item.productId}:`, productError.message);
+          }
+        }
+      }
 
       return {
         success: true,

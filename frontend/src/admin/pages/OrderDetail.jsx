@@ -121,7 +121,7 @@ const OrderDetail = () => {
               {order.items?.map((item, index) => (
                 <div key={index} className="flex gap-4 pb-4 border-b border-gray-100 last:border-0">
                   <img
-                    src={item.productId?.images?.[0] || 'https://placehold.co/80x80'}
+                    src={item.image || 'https://placehold.co/80x80'}
                     alt={item.name}
                     className="w-20 h-20 object-cover rounded"
                   />
@@ -175,8 +175,8 @@ const OrderDetail = () => {
             </div>
             {order.shippingAddress && (
               <div className="font-body text-sm text-gray-600 space-y-1">
-                <p className="font-medium text-gray-900">{order.shippingAddress.label}</p>
-                <p>{order.shippingAddress.street}</p>
+                <p className="font-medium text-gray-900">{order.shippingAddress.name}</p>
+                <p>{order.shippingAddress.address}</p>
                 <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.pincode}</p>
                 <p>{order.shippingAddress.country}</p>
                 {order.shippingAddress.phone && <p>Phone: {order.shippingAddress.phone}</p>}

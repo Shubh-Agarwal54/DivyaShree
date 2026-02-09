@@ -45,7 +45,7 @@ const Cart = () => {
 
   const calculateShipping = () => {
     const subtotal = calculateSubtotal();
-    return subtotal >= 2999 ? 0 : 200;
+    return subtotal >= 2999 ? 0 : 99;
   };
 
   const calculateDiscount = () => {

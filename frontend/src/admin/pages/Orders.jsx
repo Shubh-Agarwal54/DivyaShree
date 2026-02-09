@@ -36,11 +36,12 @@ const Orders = () => {
 
       const response = await api.get('/admin/orders', { params });
       setOrders(response.data.data.orders);
+      const p = response.data.data.pagination || {};
       setPagination({
-        page: response.data.data.pagination.currentPage,
-        limit: response.data.data.pagination.limit,
-        totalPages: response.data.data.pagination.totalPages,
-        totalOrders: response.data.data.pagination.totalOrders
+        page: p.page || 1,
+        limit: p.limit || pagination.limit,
+        totalPages: p.pages || 1,
+        totalOrders: p.total || 0,
       });
     } catch (err) {
       console.error('Failed to fetch orders:', err);
@@ -220,7 +221,10 @@ const Orders = () => {
             {/* Pagination */}
             <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
               <p className="font-body text-sm text-gray-600">
-                Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.totalOrders)} of {pagination.totalOrders} orders
+                {pagination.totalOrders === 0
+                  ? 'Showing 0 to 0 of 0 orders'
+                  : `Showing ${((pagination.page - 1) * pagination.limit) + 1} to ${Math.min(pagination.page * pagination.limit, pagination.totalOrders)} of ${pagination.totalOrders} orders`
+                }
               </p>
               <div className="flex items-center gap-2">
                 <button

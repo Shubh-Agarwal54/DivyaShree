@@ -14,6 +14,8 @@ const Account = () => {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [showProfileEditModal, setShowProfileEditModal] = useState(false);
+  const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const { user, logout, refreshUser } = useAuth();
@@ -204,6 +206,16 @@ const Account = () => {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
     }
+  };
+
+  const openOrderDetailsModal = (order) => {
+    setSelectedOrder(order);
+    setShowOrderDetailsModal(true);
+  };
+
+  const closeOrderDetailsModal = () => {
+    setShowOrderDetailsModal(false);
+    setSelectedOrder(null);
   };
 
   if (!user) {
@@ -408,7 +420,10 @@ const Account = () => {
 
                         <div className="flex items-center justify-between pt-4 border-t border-border">
                           <div className="font-display text-xl font-bold text-primary">{formatPrice(order.total)}</div>
-                          <button className="flex items-center gap-2 px-4 py-2 border-2 border-border hover:border-primary transition-all rounded-sm font-body text-sm">
+                          <button 
+                            onClick={() => openOrderDetailsModal(order)}
+                            className="flex items-center gap-2 px-4 py-2 border-2 border-border hover:border-primary transition-all rounded-sm font-body text-sm"
+                          >
                             View Details
                             <ChevronRight size={16} />
                           </button>
@@ -728,6 +743,137 @@ const Account = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Order Details Modal */}
+      {showOrderDetailsModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center md:items-start justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-card rounded-lg shadow-2xl max-w-3xl w-full my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <div>
+                <h2 className="font-display text-2xl text-foreground">Order Details</h2>
+                <p className="font-body text-sm text-muted-foreground mt-1">Order #{selectedOrder.orderNumber}</p>
+              </div>
+              <button 
+                onClick={closeOrderDetailsModal}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Order Status */}
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                <div>
+                  <p className="font-body text-sm text-muted-foreground">Order Status</p>
+                  <p className={`font-body text-lg font-semibold ${getStatusColor(selectedOrder.status)} mt-1`}>
+                    {formatStatus(selectedOrder.status)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-body text-sm text-muted-foreground">Order Date</p>
+                  <p className="font-body text-base font-medium text-foreground mt-1">
+                    {new Date(selectedOrder.createdAt).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div>
+                <h3 className="font-display text-lg font-semibold mb-4">Items ({selectedOrder.items?.length || 0})</h3>
+                <div className="space-y-3">
+                  {selectedOrder.items?.map((item, index) => (
+                    <div key={index} className="flex gap-4 p-4 border border-border rounded-lg">
+                      <img 
+                        src={item.image || 'https://placehold.co/80x80'} 
+                        alt={item.name}
+                        className="w-20 h-20 object-cover rounded"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-body font-semibold text-foreground">{item.name}</h4>
+                        <p className="font-body text-sm text-muted-foreground mt-1">
+                          Quantity: {item.quantity}
+                        </p>
+                        <p className="font-body text-sm font-medium text-primary mt-1">
+                          {formatPrice(item.price)} × {item.quantity}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-body font-semibold text-foreground">
+                          {formatPrice(item.price * item.quantity)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              <div>
+                <h3 className="font-display text-lg font-semibold mb-3">Shipping Address</h3>
+                <div className="p-4 border border-border rounded-lg">
+                  <p className="font-body font-medium text-foreground">{selectedOrder.shippingAddress?.name}</p>
+                  <p className="font-body text-sm text-muted-foreground mt-2">{selectedOrder.shippingAddress?.address}</p>
+                  <p className="font-body text-sm text-muted-foreground">
+                    {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state} - {selectedOrder.shippingAddress?.pincode}
+                  </p>
+                  <p className="font-body text-sm text-muted-foreground mt-2">
+                    Phone: {selectedOrder.shippingAddress?.phone}
+                  </p>
+                </div>
+              </div>
+
+              {/* Payment & Total */}
+              <div>
+                <h3 className="font-display text-lg font-semibold mb-3">Payment Summary</h3>
+                <div className="p-4 border border-border rounded-lg space-y-2">
+                  <div className="flex justify-between font-body text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="text-foreground">{formatPrice(selectedOrder.subtotal || selectedOrder.total)}</span>
+                  </div>
+                  {selectedOrder.discount > 0 && (
+                    <div className="flex justify-between font-body text-sm">
+                      <span className="text-muted-foreground">Discount</span>
+                      <span className="text-green-600">-{formatPrice(selectedOrder.discount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-body text-sm">
+                    <span className="text-muted-foreground">Shipping</span>
+                    <span className="text-foreground">
+                      {selectedOrder.shipping > 0 ? formatPrice(selectedOrder.shipping) : 'FREE'}
+                    </span>
+                  </div>
+                  <div className="pt-2 border-t border-border mt-2">
+                    <div className="flex justify-between">
+                      <span className="font-display text-lg font-semibold text-foreground">Total</span>
+                      <span className="font-display text-lg font-bold text-primary">{formatPrice(selectedOrder.total)}</span>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-border mt-2">
+                    <div className="flex justify-between font-body text-sm">
+                      <span className="text-muted-foreground">Payment Method</span>
+                      <span className="text-foreground font-medium">{selectedOrder.paymentMethod?.toUpperCase() || 'COD'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-border">
+              <button
+                onClick={closeOrderDetailsModal}
+                className="w-full px-6 py-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-all rounded-sm font-body text-sm uppercase tracking-wider"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
