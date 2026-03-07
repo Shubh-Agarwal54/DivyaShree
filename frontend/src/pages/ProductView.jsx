@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Heart, Share2, Star, Truck, RefreshCw, Shield, ChevronRight, Minus, Plus } from 'lucide-react';
+import { Heart, Share2, Star, Truck, RefreshCw, Shield, ChevronRight, Minus, Plus, ImagePlus, X as XIcon, MessageCircle } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
@@ -46,6 +46,8 @@ const ProductView = () => {
     comment: ''
   });
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewImages, setReviewImages] = useState([]); // File objects for upload
+  const [reviewImagePreviews, setReviewImagePreviews] = useState([]);
   
   // Debug: Log user when it changes
   useEffect(() => {
@@ -309,16 +311,17 @@ const ProductView = () => {
     setSubmittingReview(true);
     
     try {
-      const result = await reviewAPI.createReview(id, {
-        name: userName,
-        email: userEmail,
-        rating: reviewForm.rating,
-        comment: reviewForm.comment
-      });
+      const result = await reviewAPI.createReview(
+        id,
+        { name: userName, email: userEmail, rating: reviewForm.rating, comment: reviewForm.comment },
+        reviewImages
+      );
 
       if (result.success) {
         toast.success('Review submitted successfully!');
         setReviewForm({ name: '', email: '', rating: 5, comment: '' });
+        setReviewImages([]);
+        setReviewImagePreviews([]);
         setShowReviewForm(false);
         // Refresh reviews and update product data
         await fetchReviews(id);
@@ -338,6 +341,21 @@ const ProductView = () => {
     } finally {
       setSubmittingReview(false);
     }
+  };
+
+  const handleReviewImageChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    const newFiles = [...reviewImages, ...files].slice(0, 5);
+    setReviewImages(newFiles);
+    // Generate previews
+    const previews = newFiles.map((f) => URL.createObjectURL(f));
+    setReviewImagePreviews(previews);
+  };
+
+  const removeReviewImage = (idx) => {
+    const updated = reviewImages.filter((_, i) => i !== idx);
+    setReviewImages(updated);
+    setReviewImagePreviews(updated.map((f) => URL.createObjectURL(f)));
   };
 
   const formatDate = (dateString) => {
@@ -612,7 +630,13 @@ const ProductView = () => {
                     </div>
                     
                     <button
-                      onClick={() => setShowReviewForm(!showReviewForm)}
+                      onClick={() => {
+                        setShowReviewForm(!showReviewForm);
+                        if (showReviewForm) {
+                          setReviewImages([]);
+                          setReviewImagePreviews([]);
+                        }
+                      }}
                       className="px-6 py-2 bg-primary text-primary-foreground rounded-sm font-body text-sm hover:bg-primary/90 transition-colors"
                     >
                       {showReviewForm ? 'Cancel' : 'Write a Review'}
@@ -700,6 +724,41 @@ const ProductView = () => {
                           </p>
                         </div>
 
+                        {/* Review Images */}
+                        <div>
+                          <label className="block font-body text-sm font-medium mb-2">
+                            Add Photos (optional, max 5)
+                          </label>
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {reviewImagePreviews.map((src, idx) => (
+                              <div key={idx} className="relative w-20 h-20 rounded-md overflow-hidden border border-border">
+                                <img src={src} alt="" className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => removeReviewImage(idx)}
+                                  className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80"
+                                >
+                                  <XIcon size={12} />
+                                </button>
+                              </div>
+                            ))}
+                            {reviewImages.length < 5 && (
+                              <label className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-border rounded-md cursor-pointer hover:border-primary transition-colors text-muted-foreground hover:text-primary">
+                                <ImagePlus size={20} />
+                                <span className="text-xs mt-1">Add</span>
+                                <input
+                                  type="file"
+                                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                                  multiple
+                                  className="hidden"
+                                  onChange={handleReviewImageChange}
+                                />
+                              </label>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">JPG, PNG, WEBP — max 5MB each</p>
+                        </div>
+
                         {/* Submit Button */}
                         <button
                           type="submit"
@@ -740,6 +799,37 @@ const ProductView = () => {
                             </span>
                           </div>
                           <p className="font-body text-foreground">{review.comment}</p>
+
+                          {/* Review Images */}
+                          {review.imageUrls && review.imageUrls.filter(Boolean).length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {review.imageUrls.filter(Boolean).map((url, idx) => (
+                                <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                                  <img
+                                    src={url}
+                                    alt={`Review photo ${idx + 1}`}
+                                    className="w-20 h-20 object-cover rounded-md border border-border hover:opacity-90 transition-opacity"
+                                  />
+                                </a>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Admin Response */}
+                          {review.adminResponse?.comment && (
+                            <div className="mt-3 p-3 bg-primary/5 border-l-4 border-primary rounded-r-md">
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <MessageCircle size={14} className="text-primary" />
+                                <span className="font-body text-xs font-semibold text-primary">Store Response</span>
+                                {review.adminResponse.respondedAt && (
+                                  <span className="font-body text-xs text-muted-foreground">
+                                    · {formatDate(review.adminResponse.respondedAt)}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="font-body text-sm text-foreground">{review.adminResponse.comment}</p>
+                            </div>
+                          )}
                         </div>
                       ))
                     ) : (

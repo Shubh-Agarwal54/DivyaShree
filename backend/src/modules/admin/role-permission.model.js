@@ -53,6 +53,15 @@ const rolePermissionSchema = new mongoose.Schema({
       view: { type: Boolean, default: false },
       manage: { type: Boolean, default: false },
     },
+    reviews: {
+      view: { type: Boolean, default: false },
+      delete: { type: Boolean, default: false },
+      respond: { type: Boolean, default: false },
+      manage: { type: Boolean, default: false },
+    },
+    reports: {
+      view: { type: Boolean, default: false },
+    },
   },
   description: {
     type: String,
@@ -86,6 +95,8 @@ rolePermissionSchema.statics.createDefaultPermissions = async function() {
         settings: { view: true, edit: true },
         banners: { view: true, edit: true },
         rolePermissions: { view: true, manage: true },
+        reviews: { view: true, delete: true, respond: true, manage: true },
+        reports: { view: true },
       },
     },
     {
@@ -101,6 +112,8 @@ rolePermissionSchema.statics.createDefaultPermissions = async function() {
         settings: { view: true, edit: false },
         banners: { view: true, edit: true },
         rolePermissions: { view: true, manage: false },
+        reviews: { view: true, delete: true, respond: true, manage: false },
+        reports: { view: true },
       },
     },
     {
@@ -116,6 +129,8 @@ rolePermissionSchema.statics.createDefaultPermissions = async function() {
         settings: { view: false, edit: false },
         banners: { view: true, edit: false },
         rolePermissions: { view: false, manage: false },
+        reviews: { view: true, delete: false, respond: true, manage: false },
+        reports: { view: false },
       },
     },
     {
@@ -131,6 +146,8 @@ rolePermissionSchema.statics.createDefaultPermissions = async function() {
         settings: { view: false, edit: false },
         banners: { view: false, edit: false },
         rolePermissions: { view: false, manage: false },
+        reviews: { view: true, delete: false, respond: false, manage: false },
+        reports: { view: false },
       },
     },
   ];

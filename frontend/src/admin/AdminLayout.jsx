@@ -15,6 +15,8 @@ import {
   UserCircle,
   Warehouse,
   Shield,
+  Star,
+  TrendingUp,
 } from 'lucide-react';
 import api from '@/services/axios';
 
@@ -167,6 +169,18 @@ const AdminLayout = () => {
       label: 'Role Permissions', 
       path: '/admin/role-permissions',
       show: canAccess('rolePermissions', 'view')
+    },
+    { 
+      icon: Star, 
+      label: 'Reviews', 
+      path: '/admin/reviews',
+      show: canAccess('reviews', 'view')
+    },
+    { 
+      icon: TrendingUp, 
+      label: 'Sales Report', 
+      path: '/admin/reports',
+      show: canAccess('reports', 'view')
     },
     { 
       icon: Settings, 

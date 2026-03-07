@@ -2,12 +2,36 @@ const Review = require('./review.model');
 const Product = require('./product.model');
 const Order = require('../order/order.model');
 const mongoose = require('mongoose');
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY,
+  },
+});
+const BUCKET = process.env.AWS_BUCKET_NAME;
+const SIGNED_URL_EXPIRES = 3600;
+
+async function presignReviewImages(keys = []) {
+  if (!keys || keys.length === 0) return [];
+  return Promise.all(
+    keys.map(async (key) => {
+      if (!key) return null;
+      if (key.startsWith('http')) return key; // already a full URL (legacy)
+      const cmd = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+      return getSignedUrl(s3Client, cmd, { expiresIn: SIGNED_URL_EXPIRES });
+    })
+  );
+}
 
 class ReviewService {
   // Create a new review
   async createReview(reviewData) {
     try {
-      const { product, user, name, email, rating, comment } = reviewData;
+      const { product, user, name, email, rating, comment, images } = reviewData;
 
       // Check if product exists
       const productExists = await Product.findById(product);
@@ -32,6 +56,11 @@ class ReviewService {
         reviewData.isVerifiedPurchase = !!hasPurchased;
       }
 
+      // Attach validated image S3 keys
+      if (Array.isArray(images) && images.length > 0) {
+        reviewData.images = images.slice(0, 5); // max 5 images
+      }
+
       // Create review
       const review = await Review.create(reviewData);
 
@@ -39,13 +68,18 @@ class ReviewService {
       await this.updateProductRating(product);
 
       const populatedReview = await Review.findById(review._id)
-        .populate('user', 'name email')
+        .populate('user', 'firstName lastName email')
         .populate('product', 'name');
+
+      // Generate presigned URLs for images
+      const imageUrls = await presignReviewImages(populatedReview.images);
+      const reviewObj = populatedReview.toObject();
+      reviewObj.imageUrls = imageUrls;
 
       return { 
         success: true, 
         message: 'Review submitted successfully',
-        data: populatedReview 
+        data: reviewObj 
       };
     } catch (error) {
       console.error('Error creating review:', error);
@@ -59,11 +93,11 @@ class ReviewService {
       const { page = 1, limit = 10, sort = '-createdAt' } = options;
       const skip = (page - 1) * limit;
 
-      const reviews = await Review.find({ 
+      const rawReviews = await Review.find({ 
         product: productId,
         isApproved: true 
       })
-        .populate('user', 'name')
+        .populate('user', 'firstName lastName')
         .sort(sort)
         .skip(skip)
         .limit(parseInt(limit));
@@ -72,6 +106,15 @@ class ReviewService {
         product: productId,
         isApproved: true 
       });
+
+      // Generate presigned URLs for each review's images
+      const reviews = await Promise.all(
+        rawReviews.map(async (r) => {
+          const obj = r.toObject();
+          obj.imageUrls = await presignReviewImages(r.images);
+          return obj;
+        })
+      );
 
       return {
         success: true,

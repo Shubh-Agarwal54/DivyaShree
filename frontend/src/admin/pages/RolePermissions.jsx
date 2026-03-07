@@ -137,6 +137,8 @@ const RolePermissions = () => {
     { key: 'settings', label: 'Settings', actions: ['view', 'edit'] },
     { key: 'banners', label: 'Banners', actions: ['view', 'edit'] },
     { key: 'rolePermissions', label: 'Role Permissions', actions: ['view', 'manage'] },
+    { key: 'reviews', label: 'Reviews', actions: ['view', 'delete', 'respond', 'manage'] },
+    { key: 'reports', label: 'Sales Reports', actions: ['view'] },
   ];
 
   const getRoleBadgeClass = (roleName) => {
@@ -161,6 +163,7 @@ const RolePermissions = () => {
       updateStock: 'Update Stock',
       manage: 'Manage',
       lowStockAlerts: 'Low Stock Alerts',
+      respond: 'Respond',
     };
     return labels[action] || action;
   };

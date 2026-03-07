@@ -46,6 +46,15 @@ const reviewSchema = new mongoose.Schema({
     default: 0,
     min: 0,
   },
+  images: [{
+    type: String, // S3 key
+    trim: true,
+  }],
+  adminResponse: {
+    comment: { type: String, trim: true },
+    respondedAt: { type: Date },
+    respondedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  },
 }, {
   timestamps: true,
 });

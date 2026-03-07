@@ -45,6 +45,8 @@ import Analytics from "./admin/pages/Analytics";
 import Settings from "./admin/pages/Settings";
 import InventoryManagement from "./admin/pages/InventoryManagement";
 import RolePermissions from "./admin/pages/RolePermissions";
+import Reviews from "./admin/pages/Reviews";
+import SalesReport from "./admin/pages/SalesReport";
 // Shop Pages
 import Sarees from "./pages/shop/Sarees";
 import Lehengas from "./pages/shop/Lehengas";
@@ -185,6 +187,8 @@ const App = () => (
               <Route path="role-permissions" element={<RolePermissions />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="reviews" element={<Reviews />} />
+              <Route path="reports" element={<SalesReport />} />
             </Route>
             
             {/* Catch-all 404 */}

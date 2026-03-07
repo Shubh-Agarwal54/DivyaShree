@@ -12,6 +12,8 @@ const inventoryController = require('./inventory.controller');
 const rolePermissionController = require('./role-permission.controller');
 const bannerController = require('./banner.controller');
 const adminAuditService = require('./admin-audit.service');
+const adminReviewController = require('./admin-review.controller');
+const salesReportController = require('./admin-sales-report.controller');
 
 // All admin routes require authentication and admin role
 router.use(authMiddleware);
@@ -75,6 +77,17 @@ router.get('/banners/:key', checkPermission('banners', 'view'), bannerController
 router.put('/banners/:key/texts', checkPermission('banners', 'edit'), bannerController.updateBannerTexts.bind(bannerController));
 router.post('/banners/:key/image', checkPermission('banners', 'edit'), bannerController.uploadBannerImage.bind(bannerController));
 router.delete('/banners/:key/image', checkPermission('banners', 'edit'), bannerController.resetBannerImage.bind(bannerController));
+
+// Review Management Routes
+router.get('/reviews', checkPermission('reviews', 'view'), adminReviewController.getAllReviews.bind(adminReviewController));
+router.get('/reviews/:reviewId', checkPermission('reviews', 'view'), adminReviewController.getReviewById.bind(adminReviewController));
+router.delete('/reviews/:reviewId', checkPermission('reviews', 'delete'), adminReviewController.deleteReview.bind(adminReviewController));
+router.post('/reviews/:reviewId/respond', checkPermission('reviews', 'respond'), adminReviewController.respondToReview.bind(adminReviewController));
+router.delete('/reviews/:reviewId/response', checkPermission('reviews', 'respond'), adminReviewController.deleteResponse.bind(adminReviewController));
+router.patch('/reviews/:reviewId/approve', checkPermission('reviews', 'manage'), adminReviewController.toggleApproval.bind(adminReviewController));
+
+// Sales Report Routes
+router.get('/reports/sales', checkPermission('reports', 'view'), salesReportController.getSalesReport.bind(salesReportController));
 
 // Audit Logs Routes
 router.get('/audit-logs', checkPermission('settings', 'view'), async (req, res) => {

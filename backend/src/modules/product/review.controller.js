@@ -59,7 +59,8 @@ class ReviewController {
         name: reviewerName,
         email: reviewerEmail,
         rating: parseInt(rating),
-        comment: comment.trim()
+        comment: comment.trim(),
+        images: (req.files || []).map(f => f.key), // S3 keys from multer-s3
       };
 
       const result = await reviewService.createReview(reviewData);
