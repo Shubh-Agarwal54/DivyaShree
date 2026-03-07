@@ -34,6 +34,9 @@ router.get('/users/:userId/orders', checkPermission('users', 'view'), adminUserC
 // Order Management Routes
 router.get('/orders', checkPermission('orders', 'view'), adminOrderController.getAllOrders);
 router.get('/orders/stats', checkPermission('orders', 'view'), adminOrderController.getOrderStats);
+
+// Staff Account Management (admin user creation)
+router.post('/staff', checkPermission('rolePermissions', 'manage'), adminUserController.createStaffUser);
 router.get('/orders/:orderId', checkPermission('orders', 'view'), adminOrderController.getOrderDetails);
 router.put('/orders/:orderId', checkPermission('orders', 'edit'), adminOrderController.updateOrder);
 router.patch('/orders/:orderId/status', checkPermission('orders', 'updateStatus'), adminOrderController.updateOrderStatus);

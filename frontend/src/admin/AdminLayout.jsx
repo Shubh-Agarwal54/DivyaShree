@@ -38,14 +38,14 @@ const AdminLayout = () => {
     console.log('AdminLayout - User Role:', user?.role);
     
     if (!user) {
-      console.log('AdminLayout - No user found, redirecting to login');
-      navigate('/login');
+      console.log('AdminLayout - No user found, redirecting to admin login');
+      navigate('/admin/login');
       return;
     }
     
     if (!['admin', 'subadmin', 'masteradmin', 'superadmin'].includes(user.role)) {
       console.log('AdminLayout - User role not authorized:', user.role);
-      navigate('/login');
+      navigate('/admin/login');
       return;
     }
     

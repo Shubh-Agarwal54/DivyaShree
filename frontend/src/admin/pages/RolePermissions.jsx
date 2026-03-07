@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Shield, Users, CheckCircle, XCircle, Edit2, Save, X as CloseIcon } from 'lucide-react';
+import { Shield, Users, CheckCircle, XCircle, Edit2, Save, X as CloseIcon, UserPlus, Eye, EyeOff } from 'lucide-react';
 import api from '@/services/axios';
 
 const RolePermissions = () => {
@@ -93,6 +93,40 @@ const RolePermissions = () => {
     });
   };
 
+  // ── Create Staff state ──────────────────────────────────────────
+  const [showCreateStaff, setShowCreateStaff] = useState(false);
+  const [staffForm, setStaffForm] = useState({ firstName: '', lastName: '', email: '', password: '', role: 'admin', phone: '' });
+  const [staffShowPwd, setStaffShowPwd] = useState(false);
+  const [staffSaving, setStaffSaving] = useState(false);
+  const [staffError, setStaffError] = useState('');
+  const [staffSuccess, setStaffSuccess] = useState('');
+
+  const handleStaffChange = (e) => {
+    setStaffForm({ ...staffForm, [e.target.name]: e.target.value });
+    setStaffError('');
+  };
+
+  const handleCreateStaff = async (e) => {
+    e.preventDefault();
+    if (!staffForm.firstName || !staffForm.email || !staffForm.password || !staffForm.role) {
+      setStaffError('First name, email, password and role are required');
+      return;
+    }
+    setStaffSaving(true);
+    setStaffError('');
+    try {
+      const res = await api.post('/admin/staff', staffForm);
+      setStaffSuccess(`Staff account created for ${res.data.data.email}`);
+      setStaffForm({ firstName: '', lastName: '', email: '', password: '', role: 'admin', phone: '' });
+      fetchRoles(); // refresh user counts
+      setTimeout(() => { setStaffSuccess(''); setShowCreateStaff(false); }, 2500);
+    } catch (err) {
+      setStaffError(err.response?.data?.message || 'Failed to create staff account');
+    } finally {
+      setStaffSaving(false);
+    }
+  };
+
   const permissionResources = [
     { key: 'dashboard', label: 'Dashboard', actions: ['view'] },
     { key: 'users', label: 'Users', actions: ['view', 'create', 'edit', 'delete', 'block'] },
@@ -145,9 +179,20 @@ const RolePermissions = () => {
     <div className="roleperm-management-container">
       {/* Header */}
       <div className="roleperm-header-section">
-        <div>
-          <h1 className="roleperm-main-title">Role & Permissions</h1>
-          <p className="roleperm-subtitle">Manage role-based access control for admin users</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="roleperm-main-title">Role & Permissions</h1>
+            <p className="roleperm-subtitle">Manage role-based access control for admin users</p>
+          </div>
+          {canManagePermissions && (
+            <button
+              onClick={() => { setShowCreateStaff(true); setStaffError(''); setStaffSuccess(''); }}
+              className="flex items-center gap-2 px-4 py-2 bg-[#6B1E1E] text-white rounded-lg hover:bg-[#8B2E2E] font-body text-sm font-medium transition-colors"
+            >
+              <UserPlus size={16} />
+              Create Staff Account
+            </button>
+          )}
         </div>
       </div>
 
@@ -291,6 +336,149 @@ const RolePermissions = () => {
           )}
         </div>
       </div>
+
+      {/* Create Staff Modal */}
+      {showCreateStaff && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#6B1E1E] rounded-lg flex items-center justify-center">
+                  <UserPlus size={16} className="text-white" />
+                </div>
+                <h2 className="font-display text-lg font-bold text-gray-900">Create Staff Account</h2>
+              </div>
+              <button onClick={() => setShowCreateStaff(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <CloseIcon size={20} />
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <form onSubmit={handleCreateStaff} className="px-6 py-5 space-y-4">
+              {staffError && (
+                <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="font-body text-sm text-red-700">{staffError}</p>
+                </div>
+              )}
+              {staffSuccess && (
+                <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="font-body text-sm text-green-700">{staffSuccess}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-body text-xs font-medium text-gray-700 mb-1">First Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={staffForm.firstName}
+                    onChange={handleStaffChange}
+                    placeholder="Priya"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#6B1E1E] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block font-body text-xs font-medium text-gray-700 mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={staffForm.lastName}
+                    onChange={handleStaffChange}
+                    placeholder="Sharma"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#6B1E1E] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-body text-xs font-medium text-gray-700 mb-1">Email Address <span className="text-red-500">*</span></label>
+                <input
+                  type="email"
+                  name="email"
+                  value={staffForm.email}
+                  onChange={handleStaffChange}
+                  placeholder="priya@divyashree.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#6B1E1E] focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block font-body text-xs font-medium text-gray-700 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={staffForm.phone}
+                  onChange={handleStaffChange}
+                  placeholder="+91 9876543210"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#6B1E1E] focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block font-body text-xs font-medium text-gray-700 mb-1">Password <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <input
+                    type={staffShowPwd ? 'text' : 'password'}
+                    name="password"
+                    value={staffForm.password}
+                    onChange={handleStaffChange}
+                    placeholder="Minimum 6 characters"
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#6B1E1E] focus:border-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setStaffShowPwd((p) => !p)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    tabIndex={-1}
+                  >
+                    {staffShowPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-body text-xs font-medium text-gray-700 mb-1">Role <span className="text-red-500">*</span></label>
+                <select
+                  name="role"
+                  value={staffForm.role}
+                  onChange={handleStaffChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg font-body text-sm focus:outline-none focus:ring-2 focus:ring-[#6B1E1E] focus:border-transparent"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="subadmin">Sub Admin</option>
+                  <option value="masteradmin">Master Admin</option>
+                  <option value="superadmin">Super Admin</option>
+                </select>
+                <p className="font-body text-xs text-gray-400 mt-1">Role determines what this user can access in the admin panel.</p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateStaff(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-body text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={staffSaving}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#6B1E1E] text-white rounded-lg hover:bg-[#8B2E2E] disabled:opacity-60 font-body text-sm font-medium transition-colors"
+                >
+                  {staffSaving ? (
+                    <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <UserPlus size={15} />
+                  )}
+                  {staffSaving ? 'Creating…' : 'Create Account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .roleperm-management-container {

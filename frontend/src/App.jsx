@@ -33,6 +33,7 @@ import CultFaves from "./pages/CultFaves";
 import CuratedForYou from "./pages/CuratedForYou";
 // Admin Pages
 import AdminLayout from "./admin/AdminLayout";
+import AdminLogin from "./admin/pages/AdminLogin";
 import Dashboard from "./admin/pages/Dashboard";
 import Users from "./admin/pages/Users";
 import UserDetail from "./admin/pages/UserDetail";
@@ -166,6 +167,9 @@ const App = () => (
             {/* Checkout Route */}
             <Route path="/checkout" element={<Checkout />} />
             
+            {/* Admin Login (public) */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Dashboard />} />

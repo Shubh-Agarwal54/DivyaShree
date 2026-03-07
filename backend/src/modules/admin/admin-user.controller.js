@@ -408,6 +408,76 @@ class AdminUserController {
       });
     }
   }
+
+  // Create a staff (admin-level) user account
+  async createStaffUser(req, res) {
+    try {
+      const { firstName, lastName, email, password, role, phone } = req.body;
+
+      // Validate required fields
+      if (!firstName || !email || !password || !role) {
+        return res.status(400).json({ success: false, message: 'firstName, email, password and role are required' });
+      }
+
+      // Only allow admin-level roles for staff accounts
+      const allowedRoles = ['admin', 'subadmin', 'masteradmin', 'superadmin'];
+      if (!allowedRoles.includes(role)) {
+        return res.status(400).json({ success: false, message: 'Invalid role. Allowed: admin, subadmin, masteradmin, superadmin' });
+      }
+
+      // Only superadmin can create superadmin/masteradmin accounts
+      if (['superadmin', 'masteradmin'].includes(role) && req.user.role !== 'superadmin') {
+        return res.status(403).json({ success: false, message: 'Only superadmin can create superadmin or masteradmin accounts' });
+      }
+
+      // Prevent creating a role equal to or higher than the requester's level
+      const roleHierarchy = { admin: 1, subadmin: 2, masteradmin: 3, superadmin: 4 };
+      if (roleHierarchy[role] >= roleHierarchy[req.user.role] && req.user.role !== 'superadmin') {
+        return res.status(403).json({ success: false, message: 'You cannot create an account with a role equal to or higher than your own' });
+      }
+
+      // Check if email already in use
+      const existing = await User.findOne({ email: email.toLowerCase().trim() });
+      if (existing) {
+        return res.status(409).json({ success: false, message: 'Email already registered' });
+      }
+
+      const user = new User({
+        firstName: firstName.trim(),
+        lastName: (lastName || '').trim(),
+        email: email.toLowerCase().trim(),
+        password,
+        phone: phone || '',
+        role,
+        isEmailVerified: true,  // admin-created accounts are pre-verified
+        isPhoneVerified: false,
+      });
+
+      await user.save();
+
+      await adminAuditService.log({
+        userId: req.user._id,
+        action: 'CREATE',
+        resource: 'User',
+        resourceId: user._id,
+        changes: { email: user.email, role },
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Staff account created successfully',
+        data: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Failed to create staff account', error: error.message });
+    }
+  }
 }
 
 module.exports = new AdminUserController();
