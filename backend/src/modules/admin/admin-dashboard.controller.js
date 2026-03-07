@@ -34,6 +34,11 @@ class AdminDashboardController {
       // Pending orders
       const pendingOrders = await Order.countDocuments({ status: 'pending' });
 
+      // Today's orders
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const todayOrders = await Order.countDocuments({ createdAt: { $gte: startOfToday } });
+
       // Out of stock products
       const outOfStockProducts = await Product.countDocuments({ inStock: false });
 
@@ -74,6 +79,7 @@ class AdminDashboardController {
             totalRevenue,
             newUsers,
             pendingOrders,
+            todayOrders,
             outOfStockProducts,
           },
           recentOrders,

@@ -86,6 +86,13 @@ const AdminDashboard = () => {
           color="bg-green-600"
         />
         <StatCard
+          icon={ShoppingBag}
+          label="Today's Orders"
+          value={dashboard?.overview.todayOrders || 0}
+          trend={`Since midnight`}
+          color="bg-yellow-600"
+        />
+        <StatCard
           icon={Package}
           label="Total Products"
           value={dashboard?.overview.totalProducts || 0}
