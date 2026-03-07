@@ -101,6 +101,7 @@ const RolePermissions = () => {
     { key: 'inventory', label: 'Inventory', actions: ['view', 'manage', 'lowStockAlerts'] },
     { key: 'analytics', label: 'Analytics', actions: ['view'] },
     { key: 'settings', label: 'Settings', actions: ['view', 'edit'] },
+    { key: 'banners', label: 'Banners', actions: ['view', 'edit'] },
     { key: 'rolePermissions', label: 'Role Permissions', actions: ['view', 'manage'] },
   ];
 

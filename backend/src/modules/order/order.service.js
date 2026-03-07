@@ -101,6 +101,29 @@ class OrderService {
     }
   }
 
+  async trackOrderByEmail(orderNumber, email) {
+    try {
+      const User = require('../user/user.model');
+      const order = await Order.findOne({ orderNumber });
+
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
+      const user = await User.findById(order.userId).select('email');
+      if (!user || user.email.toLowerCase() !== email.trim().toLowerCase()) {
+        throw new Error('Order not found');
+      }
+
+      return {
+        success: true,
+        data: order,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // Cancel order
   async cancelOrder(orderId, userId, reason = '') {
     try {

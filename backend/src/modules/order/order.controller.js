@@ -94,15 +94,23 @@ class OrderController {
   async trackOrder(req, res) {
     try {
       const { orderNumber } = req.params;
+      const { email } = req.query;
 
-      const result = await orderService.getOrderByNumber(orderNumber, req.userId);
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email address is required to track your order',
+        });
+      }
+
+      const result = await orderService.trackOrderByEmail(orderNumber, email);
 
       res.status(200).json(result);
     } catch (error) {
       if (error.message === 'Order not found') {
         return res.status(404).json({
           success: false,
-          message: error.message,
+          message: 'No order found with these details. Please check your order number and email address.',
         });
       }
 

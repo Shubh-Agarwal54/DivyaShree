@@ -8,7 +8,7 @@ const roleMiddleware = require('../../middlewares/role.middleware');
 router.post('/', authMiddleware, orderController.createOrder);
 router.get('/', authMiddleware, orderController.getUserOrders);
 router.get('/:orderId', authMiddleware, orderController.getOrderById);
-router.get('/track/:orderNumber', authMiddleware, orderController.trackOrder);
+router.get('/track/:orderNumber', orderController.trackOrder);
 router.patch('/:orderId/cancel', authMiddleware, orderController.cancelOrder);
 router.post('/:orderId/return-exchange', authMiddleware, orderController.requestReturnExchange);
 

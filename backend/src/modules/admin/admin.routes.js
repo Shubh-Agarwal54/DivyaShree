@@ -10,6 +10,7 @@ const adminProductController = require('./admin-product.controller');
 const adminDashboardController = require('./admin-dashboard.controller');
 const inventoryController = require('./inventory.controller');
 const rolePermissionController = require('./role-permission.controller');
+const bannerController = require('./banner.controller');
 const adminAuditService = require('./admin-audit.service');
 
 // All admin routes require authentication and admin role
@@ -64,6 +65,13 @@ router.put('/permissions/:roleName', checkPermission('rolePermissions', 'manage'
 router.get('/permissions/:roleName/users', checkPermission('rolePermissions', 'view'), rolePermissionController.getUsersByRole);
 router.patch('/permissions/user/:userId/role', checkPermission('rolePermissions', 'manage'), rolePermissionController.updateUserRole);
 router.post('/permissions/initialize', isSuperAdmin, rolePermissionController.initializeDefaultPermissions);
+
+// Banner Management Routes
+router.get('/banners', checkPermission('banners', 'view'), bannerController.getAllBanners.bind(bannerController));
+router.get('/banners/:key', checkPermission('banners', 'view'), bannerController.getBanner.bind(bannerController));
+router.put('/banners/:key/texts', checkPermission('banners', 'edit'), bannerController.updateBannerTexts.bind(bannerController));
+router.post('/banners/:key/image', checkPermission('banners', 'edit'), bannerController.uploadBannerImage.bind(bannerController));
+router.delete('/banners/:key/image', checkPermission('banners', 'edit'), bannerController.resetBannerImage.bind(bannerController));
 
 // Audit Logs Routes
 router.get('/audit-logs', checkPermission('settings', 'view'), async (req, res) => {

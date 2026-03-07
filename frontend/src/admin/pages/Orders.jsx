@@ -10,7 +10,8 @@ const Orders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     status: '',
-    paymentStatus: ''
+    paymentStatus: '',
+    returnExchangeStatus: ''
   });
   const [pagination, setPagination] = useState({
     page: 1,
@@ -60,6 +61,53 @@ const Orders = () => {
     setPagination({ ...pagination, page: 1 });
   };
 
+  const handleExport = () => {
+    if (!orders || orders.length === 0) return;
+
+    const headers = [
+      'Order #',
+      'Customer',
+      'Email',
+      'Date',
+      'Items Count',
+      'Total',
+      'Order Status',
+      'Payment Status',
+      'Return/Exchange Type',
+      'Return/Exchange Status',
+      'Return/Exchange Reason'
+    ];
+
+    const rows = orders.map((o) => [
+      o.orderNumber || '',
+      `${o.userId?.firstName || ''} ${o.userId?.lastName || ''}`.trim(),
+      o.userId?.email || '',
+      o.createdAt ? new Date(o.createdAt).toLocaleString() : '',
+      o.items?.length || 0,
+      o.total != null ? o.total : '',
+      o.status || '',
+      o.paymentStatus || '',
+      o.returnExchange?.type || '',
+      o.returnExchange?.status || '',
+      o.returnExchange?.reason || ''
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const filename = `orders_export_${new Date().toISOString().slice(0,10)}.csv`;
+    a.setAttribute('download', filename);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       pending: 'bg-gray-100 text-gray-800',
@@ -89,7 +137,7 @@ const Orders = () => {
           <h1 className="font-display text-3xl font-bold text-[#6B1E1E]">Orders Management</h1>
           <p className="font-body text-gray-600 mt-1">Manage and track customer orders</p>
         </div>
-        <button className="px-4 py-2 bg-[#6B1E1E] text-white rounded-lg hover:bg-[#8B2E2E] flex items-center gap-2">
+        <button onClick={handleExport} className="px-4 py-2 bg-[#6B1E1E] text-white rounded-lg hover:bg-[#8B2E2E] flex items-center gap-2">
           <Download size={18} />
           Export Orders
         </button>
@@ -97,7 +145,7 @@ const Orders = () => {
 
       {/* Search and Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div>
             <div className="relative">
@@ -138,6 +186,19 @@ const Orders = () => {
             <option value="completed">Completed</option>
             <option value="failed">Failed</option>
           </select>
+
+          {/* Return/Exchange Filter */}
+          <select
+            value={filters.returnExchangeStatus}
+            onChange={(e) => handleFilterChange('returnExchangeStatus', e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] focus:border-transparent"
+          >
+            <option value="">All Requests</option>
+            <option value="requested">Requested</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="completed">Completed</option>
+          </select>
         </div>
       </div>
 
@@ -164,7 +225,13 @@ const Orders = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {orders.map((order) => (
+                  {orders
+                    .filter((order) => {
+                      if (!filters.returnExchangeStatus) return true;
+                      const status = order.returnExchange?.status || null;
+                      return status === filters.returnExchangeStatus;
+                    })
+                    .map((order) => (
                     <tr key={order._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <p className="font-body text-sm font-medium text-gray-900">{order.orderNumber}</p>
@@ -194,9 +261,21 @@ const Orders = () => {
                         </p>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                          {order.status}
-                        </span>
+                        <div className="space-y-1">
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                            {order.status}
+                          </span>
+                          {order.returnExchange && order.returnExchange.status && (
+                            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              order.returnExchange.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              order.returnExchange.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              order.returnExchange.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {order.returnExchange.type ? `${order.returnExchange.type} • ` : ''}{order.returnExchange.status}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(order.paymentStatus)}`}>

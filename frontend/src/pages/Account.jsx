@@ -480,6 +480,16 @@ const Account = () => {
                             <p className={`font-body text-sm font-semibold ${getStatusColor(order.status)} mb-1`}>
                               {formatStatus(order.status)}
                             </p>
+                            {order.returnExchange?.status && (
+                              <span className={`inline-block px-2 py-0.5 rounded-sm font-body text-xs font-semibold mb-1 ${
+                                order.returnExchange.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                order.returnExchange.status === 'rejected' ? 'bg-red-100 text-red-600' :
+                                order.returnExchange.status === 'completed' ? 'bg-gray-100 text-gray-600' :
+                                'bg-orange-100 text-orange-600'
+                              }`}>
+                                {order.returnExchange.type === 'return' ? 'Return' : 'Exchange'}: {order.returnExchange.status.charAt(0).toUpperCase() + order.returnExchange.status.slice(1)}
+                              </span>
+                            )}
                             <p className="font-body text-sm text-muted-foreground">
                               {order.items?.length || 0} {order.items?.length === 1 ? 'item' : 'items'}
                             </p>

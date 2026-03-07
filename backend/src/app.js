@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -89,6 +90,56 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/products', productRoutes); // Public product routes
 app.use('/api/reviews', reviewRoutes); // Review routes
 app.use('/api/admin', adminRoutes); // Admin routes
+
+// Public banner data endpoint (no auth required — used by frontend components)
+app.get('/api/banners', async (req, res) => {
+  try {
+    const Banner = require('./modules/admin/banner.model');
+    const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+    const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+
+    const s3 = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY,
+        secretAccessKey: process.env.AWS_SECRET_KEY,
+      },
+    });
+
+    const BANNER_KEYS = ['hero', 'bestseller', 'app-exclusive', 'modern-shehzadi', 'store-experience'];
+    const DEFAULT_TEXTS = {
+      hero: { scriptText: 'Shaadi', displayTitle: 'Carnival', scriptText2: 'Flash', displayTitle2: 'Sale', discountText: 'FLAT 50% OFF', discountSubtext: 'Lehengas', buttonText: 'SHOP NOW', buttonLink: '/shop/lehengas' },
+      bestseller: { scriptText: 'Bestseller', displayTitle: 'Brigade', buttonText: 'SHOP NOW', buttonLink: '/bestsellers' },
+      'app-exclusive': { displayTitle: 'APP EXCLUSIVE', scriptText: 'Offer', discountText: 'FLAT 15%', couponCode: 'APPFIRST', buttonText: 'GET THE APP' },
+      'modern-shehzadi': { scriptText: 'Modern', displayTitle: 'Shehzadi', description: 'Bridal Lehengas for the Modern Bride', buttonText: 'SHOP NOW', buttonLink: '/shop/lehengas' },
+      'store-experience': { scriptText: 'Experience Our', displayTitle: 'STORES', buttonText: 'VISIT US', buttonLink: '/about/stores' },
+    };
+
+    const banners = await Banner.find({}, 'key imageUrl texts isActive');
+    const result = {};
+
+    await Promise.all(
+      BANNER_KEYS.map(async (key) => {
+        const found = banners.find((b) => b.key === key);
+        let imageUrl = null;
+        // Generate presigned URL only if there's a custom S3 key (not a full URL)
+        if (found?.imageUrl && !found.imageUrl.startsWith('http')) {
+          const cmd = new GetObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: found.imageUrl });
+          imageUrl = await getSignedUrl(s3, cmd, { expiresIn: 3600 }).catch(() => null);
+        }
+        result[key] = {
+          imageUrl,
+          texts: { ...DEFAULT_TEXTS[key], ...(found?.texts || {}) },
+          isActive: found ? found.isActive : true,
+        };
+      })
+    );
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch banners' });
+  }
+});
 
 // 404 Handler
 app.use('*', (req, res) => {

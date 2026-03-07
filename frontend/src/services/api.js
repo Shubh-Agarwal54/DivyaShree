@@ -278,10 +278,8 @@ export const orderAPI = {
   },
 
   // Track order
-  trackOrder: async (orderNumber) => {
-    const response = await fetch(`${API_BASE_URL}/orders/track/${orderNumber}`, {
-      headers: getAuthHeaders(),
-    });
+  trackOrder: async (orderNumber, email) => {
+    const response = await fetch(`${API_BASE_URL}/orders/track/${orderNumber}?email=${encodeURIComponent(email)}`);
     return response.json();
   },
 
@@ -306,6 +304,55 @@ export const orderAPI = {
   },
 };
 
+// Banner APIs (public + admin)
+export const bannerAPI = {
+  // Public — get all banners (used by frontend components)
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/banners`);
+    return response.json();
+  },
+
+  // Admin — get all banners with full data
+  adminGetAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/admin/banners`, {
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+
+  // Admin — update text fields for a banner
+  updateTexts: async (key, texts) => {
+    const response = await fetch(`${API_BASE_URL}/admin/banners/${key}/texts`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ texts }),
+    });
+    return response.json();
+  },
+
+  // Admin — upload image for a banner
+  uploadImage: async (key, file) => {
+    const token = localStorage.getItem('divyashree_token');
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await fetch(`${API_BASE_URL}/admin/banners/${key}/image`, {
+      method: 'POST',
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      body: formData,
+    });
+    return response.json();
+  },
+
+  // Admin — reset banner image to default
+  resetImage: async (key) => {
+    const response = await fetch(`${API_BASE_URL}/admin/banners/${key}/image`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return response.json();
+  },
+};
+
 // Default export with all APIs
 export default {
   ...userAPI,
@@ -313,4 +360,5 @@ export default {
   ...wishlistAPI,
   ...cartAPI,
   ...orderAPI,
+  ...bannerAPI,
 };
