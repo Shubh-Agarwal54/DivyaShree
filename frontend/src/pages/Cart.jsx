@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag, X, ChevronDown, ChevronUp } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
+import { promoAPI } from '@/services/api';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -12,10 +13,19 @@ const Cart = () => {
   const { user } = useAuth();
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
+  const [promoData, setPromoData] = useState(null); // { code, discountAmount, description }
+  const [promoError, setPromoError] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [availablePromos, setAvailablePromos] = useState([]);
+  const [showAvailablePromos, setShowAvailablePromos] = useState(false);
 
   // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo(0, 0);
+    // Fetch available active promos for display
+    promoAPI.getActivePromos()
+      .then((res) => { if (res.success) setAvailablePromos(res.data || []); })
+      .catch(() => {});
   }, []);
 
   const formatPrice = (price) => {
@@ -51,17 +61,44 @@ const Cart = () => {
   };
 
   const calculateDiscount = () => {
-    return promoApplied ? calculateSubtotal() * 0.1 : 0;
+    return promoData ? promoData.discountAmount : 0;
   };
 
   const calculateTotal = () => {
     return calculateSubtotal() + calculateShipping() - calculateDiscount();
   };
 
-  const handleApplyPromo = () => {
-    if (promoCode.trim()) {
-      setPromoApplied(true);
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    if (!user) {
+      navigate('/login', { state: { from: '/cart' } });
+      return;
     }
+    setPromoLoading(true);
+    setPromoError('');
+    try {
+      const res = await promoAPI.validatePromo(promoCode.trim(), calculateSubtotal());
+      if (res.success) {
+        setPromoData(res.data);
+        setPromoApplied(true);
+        setPromoError('');
+      } else {
+        setPromoError(res.message || 'Invalid promo code');
+        setPromoApplied(false);
+        setPromoData(null);
+      }
+    } catch {
+      setPromoError('Failed to validate promo code');
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setPromoApplied(false);
+    setPromoData(null);
+    setPromoCode('');
+    setPromoError('');
   };
 
   const handleCheckout = () => {
@@ -71,8 +108,8 @@ const Cart = () => {
       return;
     }
 
-    // Navigate to checkout with cart data
-    navigate('/checkout');
+    // Navigate to checkout with cart data and promo
+    navigate('/checkout', { state: promoData ? { promoCode: promoData.code, discount: promoData.discountAmount } : undefined });
   };
 
   if (cartItems.length === 0) {
@@ -227,37 +264,85 @@ const Cart = () => {
                 {/* Promo Code */}
                 <div className="mb-6">
                   <label className="block font-body text-sm font-medium text-foreground mb-2">Promo Code</label>
-                  <div className="flex gap-2">
-                    <div className="flex-1 relative">
-                      <input
-                        type="text"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        placeholder="Enter code"
-                        className="w-full px-4 py-3 pl-10 border-2 border-border rounded-sm font-body text-sm focus:outline-none focus:border-primary transition-colors"
-                        disabled={promoApplied}
-                      />
-                      <Tag size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  {promoApplied && promoData ? (
+                    <div className="flex items-center justify-between p-3 bg-green-50 border-2 border-green-200 rounded-sm">
+                      <div className="flex items-center gap-2">
+                        <Tag size={16} className="text-green-600" />
+                        <div>
+                          <p className="font-body text-sm font-bold text-green-700">{promoData.code}</p>
+                          {promoData.description && (
+                            <p className="font-body text-xs text-green-600">{promoData.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <button onClick={handleRemovePromo} className="p-1 hover:bg-green-100 rounded" aria-label="Remove promo">
+                        <X size={16} className="text-green-600" />
+                      </button>
                     </div>
-                    <button
-                      onClick={handleApplyPromo}
-                      disabled={promoApplied}
-                      className="px-4 bg-primary text-primary-foreground font-body text-sm uppercase tracking-wider hover:bg-primary/90 transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                  {promoApplied && (
-                    <p className="mt-2 font-body text-sm text-green-600 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      Promo code applied!
-                    </p>
+                  ) : (
+                    <>
+                      <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                          <input
+                            type="text"
+                            value={promoCode}
+                            onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError(''); }}
+                            onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
+                            placeholder="Enter code"
+                            className={`w-full px-4 py-3 pl-10 border-2 rounded-sm font-body text-sm focus:outline-none transition-colors ${promoError ? 'border-destructive' : 'border-border focus:border-primary'}`}
+                          />
+                          <Tag size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        </div>
+                        <button
+                          onClick={handleApplyPromo}
+                          disabled={promoLoading || !promoCode.trim()}
+                          className="px-4 bg-primary text-primary-foreground font-body text-sm uppercase tracking-wider hover:bg-primary/90 transition-all rounded-sm disabled:opacity-50 disabled:cursor-not-allowed min-w-[70px]"
+                        >
+                          {promoLoading ? '...' : 'Apply'}
+                        </button>
+                      </div>
+                      {promoError && (
+                        <p className="mt-1 font-body text-xs text-destructive">{promoError}</p>
+                      )}
+                    </>
+                  )}
+
+                  {/* Available coupons toggle */}
+                  {availablePromos.length > 0 && !promoApplied && (
+                    <div className="mt-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowAvailablePromos((p) => !p)}
+                        className="flex items-center gap-1 font-body text-xs text-primary hover:text-primary/80 transition-colors"
+                      >
+                        {showAvailablePromos ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        {showAvailablePromos ? 'Hide' : 'View'} available coupons ({availablePromos.length})
+                      </button>
+                      {showAvailablePromos && (
+                        <div className="mt-2 space-y-2">
+                          {availablePromos.map((p) => (
+                            <button
+                              key={p.code}
+                              type="button"
+                              onClick={() => { setPromoCode(p.code); setPromoError(''); setShowAvailablePromos(false); }}
+                              className="w-full flex items-start justify-between p-3 border border-dashed border-primary/40 rounded-sm hover:bg-primary/5 transition-all text-left"
+                            >
+                              <div>
+                                <span className="font-mono font-bold text-primary text-sm">{p.code}</span>
+                                <p className="font-body text-xs text-muted-foreground mt-0.5">
+                                  {p.discountType === 'percentage'
+                                    ? `${p.discountValue}% off${p.maxDiscountAmount ? ` (max ₹${p.maxDiscountAmount})` : ''}`
+                                    : `₹${p.discountValue} off`}
+                                  {p.minOrderAmount > 0 ? ` · Min ₹${p.minOrderAmount}` : ''}
+                                </p>
+                                {p.description && <p className="font-body text-xs text-muted-foreground">{p.description}</p>}
+                              </div>
+                              <span className="font-body text-xs text-primary font-medium ml-2 whitespace-nowrap">Tap to apply</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -273,9 +358,9 @@ const Cart = () => {
                       {calculateShipping() === 0 ? 'FREE' : formatPrice(calculateShipping())}
                     </span>
                   </div>
-                  {promoApplied && (
+                  {promoApplied && promoData && (
                     <div className="flex justify-between font-body text-sm">
-                      <span className="text-muted-foreground">Discount (10%)</span>
+                      <span className="text-muted-foreground">Discount ({promoData.code})</span>
                       <span className="text-green-600 font-medium">-{formatPrice(calculateDiscount())}</span>
                     </div>
                   )}

@@ -918,7 +918,9 @@ const Account = () => {
                   </div>
                   {selectedOrder.discount > 0 && (
                     <div className="flex justify-between font-body text-sm">
-                      <span className="text-muted-foreground">Discount</span>
+                      <span className="text-muted-foreground">
+                        Discount{selectedOrder.promoCode ? ` (${selectedOrder.promoCode})` : ''}
+                      </span>
                       <span className="text-green-600">-{formatPrice(selectedOrder.discount)}</span>
                     </div>
                   )}

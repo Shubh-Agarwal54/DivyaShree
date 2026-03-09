@@ -14,6 +14,7 @@ const bannerController = require('./banner.controller');
 const adminAuditService = require('./admin-audit.service');
 const adminReviewController = require('./admin-review.controller');
 const salesReportController = require('./admin-sales-report.controller');
+const promoController = require('./promo.controller');
 
 // All admin routes require authentication and admin role
 router.use(authMiddleware);
@@ -88,6 +89,12 @@ router.patch('/reviews/:reviewId/approve', checkPermission('reviews', 'manage'),
 
 // Sales Report Routes
 router.get('/reports/sales', checkPermission('reports', 'view'), salesReportController.getSalesReport.bind(salesReportController));
+
+// Promo Code Management Routes
+router.get('/promos', checkPermission('settings', 'view'), promoController.getAllPromos.bind(promoController));
+router.post('/promos', checkPermission('settings', 'edit'), promoController.createPromo.bind(promoController));
+router.put('/promos/:promoId', checkPermission('settings', 'edit'), promoController.updatePromo.bind(promoController));
+router.delete('/promos/:promoId', checkPermission('settings', 'edit'), promoController.deletePromo.bind(promoController));
 
 // Audit Logs Routes
 router.get('/audit-logs', checkPermission('settings', 'view'), async (req, res) => {

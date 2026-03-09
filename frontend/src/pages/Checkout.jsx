@@ -1,20 +1,32 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useAddress } from '@/context/AddressContext';
-import { orderAPI } from '@/services/api';
+import { orderAPI, promoAPI } from '@/services/api';
 import { toast } from 'sonner';
-import { ChevronRight, Trash2, Plus, Minus, ShoppingBag, Lock, Truck, CreditCard, CheckCircle, X, MapPin, Wallet, Building2, Smartphone } from 'lucide-react';
+import { ChevronRight, Trash2, Plus, Minus, ShoppingBag, Lock, Truck, CreditCard, CheckCircle, X, MapPin, Wallet, Building2, Smartphone, Tag } from 'lucide-react';
 
 export default function Checkout() {
   const [currentStep, setCurrentStep] = useState(1);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { cartItems, updateQuantity, removeFromCart, getCartTotal, clearCart } = useCart();
   const { addresses, getDefaultAddress } = useAddress();
+  
+  // Promo state — pre-filled from cart navigation state if available
+  const [promoCode, setPromoCode] = useState(location.state?.promoCode || '');
+  const [promoData, setPromoData] = useState(
+    location.state?.promoCode
+      ? { code: location.state.promoCode, discountAmount: location.state.discount || 0 }
+      : null
+  );
+  const [promoApplied, setPromoApplied] = useState(!!location.state?.promoCode);
+  const [promoError, setPromoError] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
   
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [showAddressSelector, setShowAddressSelector] = useState(false);
@@ -104,7 +116,38 @@ export default function Checkout() {
   const subtotal = getCartTotal();
   const shipping = subtotal > 2999 ? 0 : 99;
   const tax = Math.round(subtotal * 0.05);
-  const total = subtotal + shipping;
+  const discount = promoData ? promoData.discountAmount : 0;
+  const total = subtotal + shipping - discount;
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    setPromoError('');
+    try {
+      const res = await promoAPI.validatePromo(promoCode.trim(), subtotal);
+      if (res.success) {
+        setPromoData(res.data);
+        setPromoApplied(true);
+        setPromoError('');
+        toast.success(`Promo applied! You save ${formatPrice(res.data.discountAmount)}`);
+      } else {
+        setPromoError(res.message || 'Invalid promo code');
+        setPromoApplied(false);
+        setPromoData(null);
+      }
+    } catch {
+      setPromoError('Failed to validate promo code');
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setPromoApplied(false);
+    setPromoData(null);
+    setPromoCode('');
+    setPromoError('');
+  };
 
   const validateStep = (step) => {
     const newErrors = {};
@@ -190,6 +233,8 @@ export default function Checkout() {
         subtotal: subtotal,
         shipping: shipping,
         tax: tax,
+        discount: discount,
+        promoCode: promoData ? promoData.code : null,
         total: total,
       };
 
@@ -870,7 +915,52 @@ export default function Checkout() {
                       <span className="text-muted-foreground">Tax (5%)</span>
                       <span className="text-foreground">{formatPrice(tax)}</span>
                     </div> */}
+                    {promoApplied && promoData && (
+                      <div className="flex justify-between font-body text-sm">
+                        <span className="text-green-600 flex items-center gap-1"><Tag size={13} />{promoData.code}</span>
+                        <span className="text-green-600 font-medium">-{formatPrice(discount)}</span>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Promo input inline (for steps 1-3) */}
+                  {!promoApplied && (
+                    <div className="mb-4 pb-4 border-b border-border">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={promoCode}
+                          onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError(''); }}
+                          onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
+                          placeholder="Promo code"
+                          className="flex-1 px-3 py-2 border-2 border-border rounded-sm font-body text-sm focus:outline-none focus:border-primary transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyPromo}
+                          disabled={promoLoading || !promoCode.trim()}
+                          className="px-3 py-2 bg-primary text-primary-foreground font-body text-xs uppercase tracking-wider hover:bg-primary/90 transition-all rounded-sm disabled:opacity-50"
+                        >
+                          {promoLoading ? '...' : 'Apply'}
+                        </button>
+                      </div>
+                      {promoError && <p className="mt-1 font-body text-xs text-destructive">{promoError}</p>}
+                    </div>
+                  )}
+
+                  {promoApplied && promoData && (
+                    <div className="mb-4 pb-4 border-b border-border">
+                      <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-sm">
+                        <div className="flex items-center gap-1.5">
+                          <Tag size={13} className="text-green-600" />
+                          <span className="font-body text-xs font-bold text-green-700">{promoData.code} applied</span>
+                        </div>
+                        <button onClick={handleRemovePromo} className="text-green-600 hover:text-green-800">
+                          <X size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center mb-4">
                     <span className="font-display text-xl text-foreground">Total</span>

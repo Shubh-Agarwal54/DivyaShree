@@ -1,7 +1,132 @@
 import { useState, useEffect, useRef } from 'react';
-import { Save, Mail, Bell, Shield, Database, Image, ChevronDown, ChevronUp, Upload, RotateCcw, Check, AlertCircle } from 'lucide-react';
+import { Save, Mail, Bell, Shield, Database, Image, ChevronDown, ChevronUp, Upload, RotateCcw, Check, AlertCircle, Tag, Plus, Trash2, Edit2, X, ToggleLeft, ToggleRight } from 'lucide-react';
 import { bannerAPI } from '@/services/api';
 import api from '@/services/axios';
+
+// ── Promo Coupon Management ──────────────────────────────────────────────────
+
+const EMPTY_PROMO = {
+  code: '',
+  description: '',
+  discountType: 'percentage',
+  discountValue: '',
+  minOrderAmount: '',
+  maxDiscountAmount: '',
+  maxUses: '',
+  isActive: true,
+  expiresAt: '',
+};
+
+const PromoFormModal = ({ initial, onSave, onClose }) => {
+  const [form, setForm] = useState(initial || EMPTY_PROMO);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((p) => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.code || !form.discountValue) {
+      setError('Code and discount value are required');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    await onSave(form);
+    setSaving(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b border-gray-200">
+          <h3 className="font-display text-xl font-semibold text-gray-900">
+            {initial ? 'Edit Coupon' : 'New Coupon'}
+          </h3>
+          <button type="button" onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {error && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-body">
+              <AlertCircle size={15} />{error}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="block font-body text-xs font-medium text-gray-600 mb-1">Coupon Code *</label>
+              <input name="code" value={form.code} onChange={handleChange} placeholder="e.g. SAVE20"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] font-body text-sm uppercase" />
+            </div>
+            <div className="col-span-2">
+              <label className="block font-body text-xs font-medium text-gray-600 mb-1">Description</label>
+              <input name="description" value={form.description} onChange={handleChange} placeholder="Brief description"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] font-body text-sm" />
+            </div>
+            <div>
+              <label className="block font-body text-xs font-medium text-gray-600 mb-1">Discount Type *</label>
+              <select name="discountType" value={form.discountType} onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] font-body text-sm">
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (₹)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-body text-xs font-medium text-gray-600 mb-1">
+                Discount Value * {form.discountType === 'percentage' ? '(%)' : '(₹)'}
+              </label>
+              <input type="number" name="discountValue" value={form.discountValue} onChange={handleChange}
+                min="0" placeholder={form.discountType === 'percentage' ? '10' : '100'}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] font-body text-sm" />
+            </div>
+            <div>
+              <label className="block font-body text-xs font-medium text-gray-600 mb-1">Min Order Amount (₹)</label>
+              <input type="number" name="minOrderAmount" value={form.minOrderAmount} onChange={handleChange}
+                min="0" placeholder="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] font-body text-sm" />
+            </div>
+            <div>
+              <label className="block font-body text-xs font-medium text-gray-600 mb-1">Max Discount (₹) <span className="text-gray-400">(optional)</span></label>
+              <input type="number" name="maxDiscountAmount" value={form.maxDiscountAmount} onChange={handleChange}
+                min="0" placeholder="Leave empty for no cap"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] font-body text-sm" />
+            </div>
+            <div>
+              <label className="block font-body text-xs font-medium text-gray-600 mb-1">Max Uses <span className="text-gray-400">(optional)</span></label>
+              <input type="number" name="maxUses" value={form.maxUses} onChange={handleChange}
+                min="1" placeholder="Unlimited"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] font-body text-sm" />
+            </div>
+            <div>
+              <label className="block font-body text-xs font-medium text-gray-600 mb-1">Expires At <span className="text-gray-400">(optional)</span></label>
+              <input type="datetime-local" name="expiresAt" value={form.expiresAt} onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] font-body text-sm" />
+            </div>
+          </div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange}
+              className="w-4 h-4 text-[#6B1E1E] border-gray-300 rounded focus:ring-[#6B1E1E]" />
+            <span className="font-body text-sm text-gray-700">Active (visible to customers)</span>
+          </label>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-body text-sm">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex-1 px-4 py-2 bg-[#6B1E1E] text-white rounded-lg hover:bg-[#8B2E2E] disabled:opacity-50 font-body text-sm flex items-center justify-center gap-2">
+              <Save size={15} />{saving ? 'Saving...' : 'Save Coupon'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const BANNER_CONFIGS = [
   {
@@ -233,6 +358,10 @@ const BannerCard = ({ config, initialData, canEdit = true }) => {
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const [promos, setPromos] = useState([]);
+  const [loadingPromos, setLoadingPromos] = useState(false);
+  const [promoModal, setPromoModal] = useState(null); // null | 'new' | promo object
+  const [promoMsg, setPromoMsg] = useState(null);
   const [settings, setSettings] = useState({
     siteName: 'Shree Diya',
     supportEmail: 'divyashreefashion2025@gmail.com',
@@ -256,6 +385,71 @@ const Settings = () => {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'coupons' && promos.length === 0) {
+      setLoadingPromos(true);
+      api.get('/admin/promos')
+        .then((res) => { if (res.data?.success) setPromos(res.data.data); })
+        .catch(() => {})
+        .finally(() => setLoadingPromos(false));
+    }
+  }, [activeTab]);
+
+  const showPromoMsg = (type, text) => {
+    setPromoMsg({ type, text });
+    setTimeout(() => setPromoMsg(null), 3000);
+  };
+
+  const handleSavePromo = async (form) => {
+    try {
+      const isEdit = promoModal && typeof promoModal === 'object' && promoModal._id;
+      const payload = {
+        ...form,
+        discountValue: Number(form.discountValue),
+        minOrderAmount: form.minOrderAmount ? Number(form.minOrderAmount) : 0,
+        maxDiscountAmount: form.maxDiscountAmount ? Number(form.maxDiscountAmount) : null,
+        maxUses: form.maxUses ? Number(form.maxUses) : null,
+        expiresAt: form.expiresAt || null,
+      };
+      if (isEdit) {
+        const res = await api.put(`/admin/promos/${promoModal._id}`, payload);
+        if (res.data?.success) {
+          setPromos((p) => p.map((pr) => (pr._id === promoModal._id ? res.data.data : pr)));
+          showPromoMsg('success', 'Coupon updated');
+        }
+      } else {
+        const res = await api.post('/admin/promos', payload);
+        if (res.data?.success) {
+          setPromos((p) => [res.data.data, ...p]);
+          showPromoMsg('success', 'Coupon created');
+        }
+      }
+      setPromoModal(null);
+    } catch (err) {
+      showPromoMsg('error', err?.response?.data?.message || 'Failed to save coupon');
+    }
+  };
+
+  const handleDeletePromo = async (promoId) => {
+    if (!window.confirm('Delete this coupon?')) return;
+    try {
+      await api.delete(`/admin/promos/${promoId}`);
+      setPromos((p) => p.filter((pr) => pr._id !== promoId));
+      showPromoMsg('success', 'Coupon deleted');
+    } catch {
+      showPromoMsg('error', 'Failed to delete coupon');
+    }
+  };
+
+  const handleToggleActive = async (promo) => {
+    try {
+      const res = await api.put(`/admin/promos/${promo._id}`, { isActive: !promo.isActive });
+      if (res.data?.success) {
+        setPromos((p) => p.map((pr) => (pr._id === promo._id ? res.data.data : pr)));
+      }
+    } catch {}
+  };
 
   useEffect(() => {
     if (activeTab === 'banners' && Object.keys(bannerData).length === 0) {
@@ -291,6 +485,7 @@ const Settings = () => {
     { id: 'general', label: 'General' },
     { id: 'notifications', label: 'Notifications' },
     { id: 'banners', label: 'Banners' },
+    { id: 'coupons', label: 'Coupons' },
     { id: 'security', label: 'Security' },
   ];
 
@@ -430,6 +625,140 @@ const Settings = () => {
                     canEdit={canEditBanners}
                   />
                 ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Coupons Tab */}
+      {activeTab === 'coupons' && (
+        <div className="space-y-4">
+          {promoModal !== null && (
+            <PromoFormModal
+              initial={typeof promoModal === 'object' && promoModal._id
+                ? {
+                    ...promoModal,
+                    discountValue: String(promoModal.discountValue),
+                    minOrderAmount: promoModal.minOrderAmount ? String(promoModal.minOrderAmount) : '',
+                    maxDiscountAmount: promoModal.maxDiscountAmount ? String(promoModal.maxDiscountAmount) : '',
+                    maxUses: promoModal.maxUses ? String(promoModal.maxUses) : '',
+                    expiresAt: promoModal.expiresAt ? new Date(promoModal.expiresAt).toISOString().slice(0, 16) : '',
+                  }
+                : null}
+              onSave={handleSavePromo}
+              onClose={() => setPromoModal(null)}
+            />
+          )}
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Tag size={20} className="text-gray-600" />
+                <h3 className="font-display text-lg font-semibold">Coupon Management</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPromoModal('new')}
+                className="flex items-center gap-2 px-4 py-2 bg-[#6B1E1E] text-white rounded-lg hover:bg-[#8B2E2E] font-body text-sm"
+              >
+                <Plus size={16} />
+                New Coupon
+              </button>
+            </div>
+            <p className="font-body text-sm text-gray-500 mb-5">
+              Create promo codes for customers to get discounts at checkout.
+            </p>
+
+            {promoMsg && (
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-body mb-4 ${promoMsg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+                {promoMsg.type === 'success' ? <Check size={15} /> : <AlertCircle size={15} />}
+                {promoMsg.text}
+              </div>
+            )}
+
+            {loadingPromos ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6B1E1E]"></div>
+              </div>
+            ) : promos.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <Tag size={40} className="mx-auto mb-3 opacity-30" />
+                <p className="font-body text-sm">No coupons yet. Create your first one!</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm font-body">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left px-4 py-3 text-gray-600 font-semibold">Code</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-semibold">Discount</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-semibold">Min Order</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-semibold">Uses</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-semibold">Expires</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-semibold">Status</th>
+                      <th className="text-left px-4 py-3 text-gray-600 font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {promos.map((promo) => (
+                      <tr key={promo._id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <span className="font-mono font-bold text-[#6B1E1E] bg-[#6B1E1E]/10 px-2 py-0.5 rounded text-xs">
+                            {promo.code}
+                          </span>
+                          {promo.description && (
+                            <p className="text-xs text-gray-400 mt-0.5">{promo.description}</p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-gray-900">
+                          {promo.discountType === 'percentage'
+                            ? `${promo.discountValue}%${promo.maxDiscountAmount ? ` (max ₹${promo.maxDiscountAmount})` : ''}`
+                            : `₹${promo.discountValue}`}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {promo.minOrderAmount > 0 ? `₹${promo.minOrderAmount}` : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {promo.usedCount}{promo.maxUses ? ` / ${promo.maxUses}` : ''}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {promo.expiresAt ? new Date(promo.expiresAt).toLocaleDateString('en-IN') : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleActive(promo)}
+                            className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${promo.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+                          >
+                            {promo.isActive ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                            {promo.isActive ? 'Active' : 'Inactive'}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setPromoModal(promo)}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                              title="Edit"
+                            >
+                              <Edit2 size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePromo(promo._id)}
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded"
+                              title="Delete"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

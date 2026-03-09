@@ -198,8 +198,14 @@ const OrderDetail = () => {
       });
 
       const totalsY = doc.lastAutoTable.finalY + 10;
-      doc.text('Total', 380, totalsY);
-      doc.text(formatINR(orderData.total), 470, totalsY);
+      let ty = totalsY;
+      if (orderData.discount > 0) {
+        doc.text(`Discount${orderData.promoCode ? ` (${orderData.promoCode})` : ''}`, 340, ty);
+        doc.text(`-${formatINR(orderData.discount)}`, 470, ty);
+        ty += 10;
+      }
+      doc.text('Total', 380, ty);
+      doc.text(formatINR(orderData.total), 470, ty);
 
       // Footer note
       doc.setFontSize(8);
@@ -319,7 +325,9 @@ const OrderDetail = () => {
               </div>
               {order.discount > 0 && (
                 <div className="flex justify-between font-body text-sm">
-                  <span className="text-gray-600">Discount</span>
+                  <span className="text-gray-600">
+                    Discount{order.promoCode ? ` (${order.promoCode})` : ''}
+                  </span>
                   <span className="text-green-600">-₹{order.discount?.toLocaleString('en-IN')}</span>
                 </div>
               )}

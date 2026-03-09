@@ -1,5 +1,6 @@
 const Order = require('./order.model');
 const Product = require('../product/product.model');
+const Promo = require('../admin/promo.model');
 
 class OrderService {
   // Create new order
@@ -16,6 +17,18 @@ class OrderService {
       });
 
       await order.save();
+
+      // Increment promo usedCount if a promo code was used
+      if (orderData.promoCode) {
+        try {
+          await Promo.findOneAndUpdate(
+            { code: orderData.promoCode.toUpperCase().trim() },
+            { $inc: { usedCount: 1 } }
+          );
+        } catch (promoError) {
+          console.error('Failed to update promo usedCount:', promoError.message);
+        }
+      }
 
       // Update product soldCount and stockQuantity
       if (orderData.items && Array.isArray(orderData.items)) {

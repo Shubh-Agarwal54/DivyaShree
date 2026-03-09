@@ -91,6 +91,12 @@ app.use('/api/products', productRoutes); // Public product routes
 app.use('/api/reviews', reviewRoutes); // Review routes
 app.use('/api/admin', adminRoutes); // Admin routes
 
+// Public promo endpoints (no auth required for listing active promos; validate requires auth)
+const promoController = require('./modules/admin/promo.controller');
+const authMiddleware = require('./middlewares/auth.middleware');
+app.get('/api/promos/active', promoController.getActivePromos.bind(promoController));
+app.post('/api/promos/validate', authMiddleware, promoController.validatePromo.bind(promoController));
+
 // Public banner data endpoint (no auth required — used by frontend components)
 app.get('/api/banners', async (req, res) => {
   try {

@@ -362,3 +362,22 @@ export default {
   ...orderAPI,
   ...bannerAPI,
 };
+
+// Promo / Coupon APIs
+export const promoAPI = {
+  // Get active promos (public, for cart display)
+  getActivePromos: async () => {
+    const response = await fetch(`${API_BASE_URL}/promos/active`);
+    return response.json();
+  },
+
+  // Validate a promo code (requires auth)
+  validatePromo: async (code, subtotal) => {
+    const response = await fetch(`${API_BASE_URL}/promos/validate`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ code, subtotal }),
+    });
+    return response.json();
+  },
+};
