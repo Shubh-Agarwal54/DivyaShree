@@ -721,6 +721,7 @@ const Account = () => {
                     type="tel"
                     required
                     pattern="\+?[\d\s-]+"
+                    maxLength={10}
                     value={addressForm.phone}
                     onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-border rounded-sm font-body text-sm focus:outline-none focus:border-primary transition-colors"
