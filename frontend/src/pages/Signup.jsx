@@ -171,6 +171,7 @@ const Signup = () => {
                   type="tel"
                   id="phone"
                   name="phone"
+                  maxLength={10}
                   value={formData.phone}
                   onChange={handleChange}
                   required
