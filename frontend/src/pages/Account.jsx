@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Package, MapPin, Heart, LogOut, Edit2, ChevronRight, Plus, X, Trash2 } from 'lucide-react';
+import { User, Package, MapPin, Heart, LogOut, Edit2, ChevronRight, Plus, X, Trash2, Download } from 'lucide-react';
+import { generateInvoicePDF } from '@/lib/invoicePDF';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/context/AuthContext';
@@ -993,6 +994,15 @@ const Account = () => {
                     className="flex-1 px-6 py-3 border-2 border-primary text-primary hover:bg-primary/10 transition-all rounded-sm font-body text-sm uppercase tracking-wider"
                   >
                     Return/Exchange
+                  </button>
+                )}
+                {selectedOrder.status === 'delivered' && (
+                  <button
+                    onClick={() => generateInvoicePDF(selectedOrder)}
+                    className="flex-1 px-6 py-3 border-2 border-primary text-primary hover:bg-primary/10 transition-all rounded-sm font-body text-sm uppercase tracking-wider flex items-center justify-center gap-2"
+                  >
+                    <Download size={15} />
+                    Download Invoice
                   </button>
                 )}
                 <button
