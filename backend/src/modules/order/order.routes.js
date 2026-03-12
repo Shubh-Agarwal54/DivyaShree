@@ -1,10 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('./order.controller');
+const paymentController = require('./payment.controller');
 const authMiddleware = require('../../middlewares/auth.middleware');
 const roleMiddleware = require('../../middlewares/role.middleware');
 
-// User routes (protected)
+// ── Payment routes ─────────────────────────────────────────────────────────────
+// Create a Razorpay order (must be authenticated)
+router.post('/payment/razorpay/create-order', authMiddleware, paymentController.createRazorpayOrder.bind(paymentController));
+// Verify payment signature & save order
+router.post('/payment/razorpay/verify', authMiddleware, paymentController.verifyPaymentAndCreateOrder.bind(paymentController));
+// Log payment failure (no sensitive side effects)
+router.post('/payment/razorpay/failure', authMiddleware, paymentController.handlePaymentFailure.bind(paymentController));
+
+// ── User order routes ──────────────────────────────────────────────────────────
 router.post('/', authMiddleware, orderController.createOrder);
 router.get('/', authMiddleware, orderController.getUserOrders);
 router.get('/:orderId', authMiddleware, orderController.getOrderById);

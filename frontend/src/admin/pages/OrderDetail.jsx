@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, MapPin, CreditCard, Truck, X } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, CreditCard, Truck, X, CheckCircle, AlertCircle } from 'lucide-react';
 import api from '@/services/axios';
 import { generateInvoicePDF } from '@/lib/invoicePDF';
 
@@ -14,6 +14,9 @@ const OrderDetail = () => {
   const [showReturnExchangeModal, setShowReturnExchangeModal] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
   const [processingAction, setProcessingAction] = useState(null);
+  const [newPaymentStatus, setNewPaymentStatus] = useState('');
+  const [updatingPayment, setUpdatingPayment] = useState(false);
+  const [razorpayPaymentId, setRazorpayPaymentId] = useState('');
 
   useEffect(() => {
     fetchOrderDetails();
@@ -25,6 +28,8 @@ const OrderDetail = () => {
       const response = await api.get(`/admin/orders/${id}`);
       setOrder(response.data.data);
       setNewStatus(response.data.data.status);
+      setNewPaymentStatus(response.data.data.paymentStatus || 'pending');
+      setRazorpayPaymentId(response.data.data.paymentDetails?.razorpayPaymentId || '');
     } catch (err) {
       console.error('Failed to fetch order details:', err);
     } finally {
@@ -59,6 +64,26 @@ const OrderDetail = () => {
       } catch (err) {
         alert('Failed to cancel order');
       }
+    }
+  };
+
+  const handleUpdatePaymentStatus = async () => {
+    if (newPaymentStatus === order.paymentStatus) {
+      alert('Please select a different payment status');
+      return;
+    }
+    try {
+      setUpdatingPayment(true);
+      await api.patch(`/admin/orders/${id}/payment-status`, {
+        paymentStatus: newPaymentStatus,
+        razorpayPaymentId: razorpayPaymentId.trim() || undefined,
+      });
+      await fetchOrderDetails();
+      alert('Payment status updated successfully');
+    } catch (err) {
+      alert('Failed to update payment status');
+    } finally {
+      setUpdatingPayment(false);
     }
   };
 
@@ -332,27 +357,77 @@ const OrderDetail = () => {
               <CreditCard size={20} className="text-gray-600" />
               <h3 className="font-display text-lg font-semibold">Payment</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div>
                 <p className="font-body text-xs text-gray-600">Payment Method</p>
                 <p className="font-body text-sm font-medium text-gray-900 capitalize">{order.paymentMethod}</p>
               </div>
               <div>
                 <p className="font-body text-xs text-gray-600">Payment Status</p>
-                <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                   order.paymentStatus === 'completed' ? 'bg-green-100 text-green-800' :
-                  order.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-red-100 text-red-800'
+                  order.paymentStatus === 'refunded'  ? 'bg-blue-100 text-blue-800'  :
+                  order.paymentStatus === 'failed'    ? 'bg-red-100 text-red-800'    :
+                  'bg-yellow-100 text-yellow-800'
                 }`}>
+                  {order.paymentStatus === 'completed' && <CheckCircle size={11} />}
+                  {order.paymentStatus === 'failed'    && <AlertCircle size={11} />}
                   {order.paymentStatus}
                 </span>
               </div>
-              {order.transactionId && (
+              {order.paymentDetails?.razorpayPaymentId && (
                 <div>
-                  <p className="font-body text-xs text-gray-600">Transaction ID</p>
-                  <p className="font-body text-sm font-medium text-gray-900">{order.transactionId}</p>
+                  <p className="font-body text-xs text-gray-600">Razorpay Payment ID</p>
+                  <p className="font-body text-xs font-medium text-gray-900 break-all">{order.paymentDetails.razorpayPaymentId}</p>
                 </div>
               )}
+              {order.paymentDetails?.razorpayOrderId && (
+                <div>
+                  <p className="font-body text-xs text-gray-600">Razorpay Order ID</p>
+                  <p className="font-body text-xs font-medium text-gray-700 break-all">{order.paymentDetails.razorpayOrderId}</p>
+                </div>
+              )}
+              {order.paymentDetails?.cardLastFour && (
+                <div>
+                  <p className="font-body text-xs text-gray-600">Card</p>
+                  <p className="font-body text-sm font-medium text-gray-900">•••• •••• •••• {order.paymentDetails.cardLastFour}</p>
+                </div>
+              )}
+              {order.paymentDetails?.upiId && (
+                <div>
+                  <p className="font-body text-xs text-gray-600">UPI ID</p>
+                  <p className="font-body text-sm font-medium text-gray-900">{order.paymentDetails.upiId}</p>
+                </div>
+              )}
+              {/* Admin: update payment status */}
+              <div className="pt-3 border-t border-gray-100 space-y-2">
+                <p className="font-body text-xs font-semibold text-gray-700">Update Payment Status</p>
+                <select
+                  value={newPaymentStatus}
+                  onChange={(e) => setNewPaymentStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] focus:border-transparent font-body text-sm"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
+                  <option value="failed">Failed</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+                {/* Optional: manually set Razorpay Payment ID */}
+                <input
+                  type="text"
+                  placeholder="Razorpay Payment ID (optional)"
+                  value={razorpayPaymentId}
+                  onChange={(e) => setRazorpayPaymentId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#6B1E1E] focus:border-transparent font-body text-xs"
+                />
+                <button
+                  onClick={handleUpdatePaymentStatus}
+                  disabled={updatingPayment || newPaymentStatus === order.paymentStatus}
+                  className="w-full px-4 py-2 bg-[#6B1E1E] text-white rounded-lg hover:bg-[#8B2E2E] disabled:opacity-50 disabled:cursor-not-allowed font-body text-sm"
+                >
+                  {updatingPayment ? 'Updating…' : 'Update Payment'}
+                </button>
+              </div>
             </div>
           </div>
 

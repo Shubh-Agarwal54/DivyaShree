@@ -302,6 +302,36 @@ export const orderAPI = {
     });
     return response.json();
   },
+
+  // Create Razorpay order (step 1 of online payment)
+  createRazorpayOrder: async (amount) => {
+    const response = await fetch(`${API_BASE_URL}/orders/payment/razorpay/create-order`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ amount }),
+    });
+    return response.json();
+  },
+
+  // Verify Razorpay payment + save order (step 2)
+  verifyRazorpayPayment: async ({ razorpayOrderId, razorpayPaymentId, razorpaySignature, orderData }) => {
+    const response = await fetch(`${API_BASE_URL}/orders/payment/razorpay/verify`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ razorpayOrderId, razorpayPaymentId, razorpaySignature, orderData }),
+    });
+    return response.json();
+  },
+
+  // Log payment failure
+  razorpayFailure: async ({ razorpayOrderId, reason }) => {
+    const response = await fetch(`${API_BASE_URL}/orders/payment/razorpay/failure`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ razorpayOrderId, reason }),
+    });
+    return response.json();
+  },
 };
 
 // Banner APIs (public + admin)

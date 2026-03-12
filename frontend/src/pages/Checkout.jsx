@@ -200,57 +200,159 @@ export default function Checkout() {
     }
   };
 
+  // Load Razorpay checkout script dynamically
+  const loadRazorpayScript = () =>
+    new Promise((resolve) => {
+      if (window.Razorpay) return resolve(true);
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+
+  const buildOrderData = () => ({
+    items: cartItems.map(item => ({
+      productId: item.productId,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      image: Array.isArray(item.images) ? item.images[0] : (item.images || item.image),
+      size: item.size,
+      color: item.color,
+    })),
+    shippingAddress: {
+      name: formData.fullName,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      pincode: formData.pincode,
+      phone: formData.phone,
+    },
+    paymentMethod: formData.paymentMethod,
+    paymentDetails: {
+      upiId: formData.paymentMethod === 'upi' ? formData.upiId : undefined,
+      cardLastFour: formData.paymentMethod === 'card' ? formData.cardNumber.slice(-4) : undefined,
+    },
+    subtotal,
+    shipping,
+    tax,
+    discount,
+    promoCode: promoData ? promoData.code : null,
+    total,
+  });
+
   const handlePlaceOrder = async () => {
-    if (!validateStep(3)) {
+    if (!validateStep(3)) return;
+
+    const orderData = buildOrderData();
+
+    // ── COD: create order directly ─────────────────────────────────────────────
+    if (formData.paymentMethod === 'cod') {
+      try {
+        const response = await orderAPI.createOrder({ ...orderData, paymentStatus: 'pending' });
+        if (response.success) {
+          toast.success('Order placed successfully!');
+          clearCart();
+          setCurrentStep(4);
+          window.scrollTo(0, 0);
+        } else {
+          toast.error(response.message || 'Failed to place order');
+        }
+      } catch (error) {
+        console.error('COD order error:', error);
+        toast.error('Failed to place order. Please try again.');
+      }
       return;
     }
 
+    // ── Online payment (UPI / Card / Netbanking) via Razorpay ─────────────────
     try {
-      // Prepare order data
-      const orderData = {
-        items: cartItems.map(item => ({
-          productId: item.productId,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          image: Array.isArray(item.images) ? item.images[0] : (item.images || item.image),
-          size: item.size,
-          color: item.color,
-        })),
-        shippingAddress: {
-          name: formData.fullName,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pincode,
-          phone: formData.phone,
-        },
-        paymentMethod: formData.paymentMethod,
-        paymentDetails: {
-          upiId: formData.paymentMethod === 'upi' ? formData.upiId : undefined,
-          cardLastFour: formData.paymentMethod === 'card' ? formData.cardNumber.slice(-4) : undefined,
-        },
-        subtotal: subtotal,
-        shipping: shipping,
-        tax: tax,
-        discount: discount,
-        promoCode: promoData ? promoData.code : null,
-        total: total,
-      };
-
-      const response = await orderAPI.createOrder(orderData);
-      
-      if (response.success) {
-        toast.success('Order placed successfully!');
-        clearCart();
-        setCurrentStep(4);
-        window.scrollTo(0, 0);
-      } else {
-        toast.error(response.message || 'Failed to place order');
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        toast.error('Failed to load payment gateway. Please check your internet connection.');
+        return;
       }
+
+      // 1. Create Razorpay order on backend
+      const rpOrderRes = await orderAPI.createRazorpayOrder(total);
+      if (!rpOrderRes.success) {
+        toast.error(rpOrderRes.message || 'Failed to initiate payment');
+        return;
+      }
+
+      const { razorpayOrderId, amount: rpAmount, currency, keyId } = rpOrderRes.data;
+
+      // 2. Open Razorpay checkout popup
+      await new Promise((resolve, reject) => {
+        const options = {
+          key: keyId,
+          amount: rpAmount,
+          currency,
+          name: 'DivyaShree',
+          description: 'Order Payment',
+          order_id: razorpayOrderId,
+          prefill: {
+            name: formData.fullName,
+            email: formData.email,
+            contact: formData.phone,
+          },
+          notes: { address: formData.address },
+          theme: { color: '#6B1E1E' },
+          method: formData.paymentMethod === 'upi'
+            ? { upi: true, card: false, netbanking: false, wallet: false }
+            : formData.paymentMethod === 'card'
+            ? { card: true, upi: false, netbanking: false, wallet: false }
+            : formData.paymentMethod === 'netbanking'
+            ? { netbanking: true, card: false, upi: false, wallet: false }
+            : undefined,
+          handler: async (paymentResponse) => {
+            // 3. Verify payment and create order
+            try {
+              const verifyRes = await orderAPI.verifyRazorpayPayment({
+                razorpayOrderId: paymentResponse.razorpay_order_id,
+                razorpayPaymentId: paymentResponse.razorpay_payment_id,
+                razorpaySignature: paymentResponse.razorpay_signature,
+                orderData,
+              });
+              if (verifyRes.success) {
+                toast.success('Payment successful! Order placed.');
+                clearCart();
+                setCurrentStep(4);
+                window.scrollTo(0, 0);
+                resolve();
+              } else {
+                toast.error(verifyRes.message || 'Payment verification failed');
+                reject(new Error(verifyRes.message));
+              }
+            } catch (err) {
+              toast.error('Payment verification failed. Contact support.');
+              reject(err);
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              toast.error('Payment cancelled. Your order was not placed.');
+              reject(new Error('dismissed'));
+            },
+          },
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', async (response) => {
+          await orderAPI.razorpayFailure({
+            razorpayOrderId,
+            reason: response.error?.description || 'Unknown',
+          });
+          toast.error(`Payment failed: ${response.error?.description || 'Please try again.'}`);
+          reject(new Error(response.error?.description));
+        });
+        rzp.open();
+      });
     } catch (error) {
-      console.error('Error placing order:', error);
-      toast.error('Failed to place order. Please try again.');
+      if (error?.message !== 'dismissed') {
+        console.error('Razorpay payment error:', error);
+      }
     }
   };
 

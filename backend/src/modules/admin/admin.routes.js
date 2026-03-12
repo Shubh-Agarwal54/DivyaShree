@@ -45,6 +45,7 @@ router.put('/orders/:orderId', checkPermission('orders', 'edit'), adminOrderCont
 router.patch('/orders/:orderId/status', checkPermission('orders', 'updateStatus'), adminOrderController.updateOrderStatus);
 router.patch('/orders/:orderId/cancel', checkPermission('orders', 'cancel'), adminOrderController.cancelOrder);
 router.patch('/orders/:orderId/return-exchange', checkPermission('orders', 'edit'), adminOrderController.processReturnExchange);
+router.patch('/orders/:orderId/payment-status', checkPermission('orders', 'edit'), adminOrderController.updatePaymentStatus.bind(adminOrderController));
 router.delete('/orders/:orderId', checkPermission('orders', 'delete'), adminOrderController.deleteOrder);
 
 // Product Management Routes

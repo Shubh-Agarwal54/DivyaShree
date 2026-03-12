@@ -479,6 +479,55 @@ class AdminOrderController {
       });
     }
   }
+
+  // Update payment status manually (admin)
+  async updatePaymentStatus(req, res) {
+    try {
+      const { orderId } = req.params;
+      const { paymentStatus, razorpayPaymentId } = req.body;
+
+      const validStatuses = ['pending', 'completed', 'failed', 'refunded'];
+      if (!validStatuses.includes(paymentStatus)) {
+        return res.status(400).json({ success: false, message: 'Invalid payment status' });
+      }
+
+      const order = await Order.findById(orderId);
+      if (!order) {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+
+      const oldPaymentStatus = order.paymentStatus;
+      order.paymentStatus = paymentStatus;
+      if (razorpayPaymentId) {
+        order.paymentDetails = order.paymentDetails || {};
+        order.paymentDetails.razorpayPaymentId = razorpayPaymentId;
+      }
+      await order.save();
+
+      await adminAuditService.logAction(
+        req.userId,
+        req.user.email,
+        'PAYMENT_STATUS_CHANGED',
+        'orders',
+        orderId,
+        { before: { paymentStatus: oldPaymentStatus }, after: { paymentStatus } },
+        req.ip,
+        req.get('user-agent')
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Payment status updated successfully',
+        data: order,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update payment status',
+        error: error.message,
+      });
+    }
+  }
 }
 
 module.exports = new AdminOrderController();
